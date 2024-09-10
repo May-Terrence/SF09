@@ -129,6 +129,10 @@ SemaphoreHandle_t semlaserFlow;
 TaskHandle_t clawTaskHandle;
 void claw_main(void *argument);
 
+/* Definitions for slamTask */
+TaskHandle_t slamTaskHandle;
+void slam_main(void *argument);
+
 QueueHandle_t queueInloopControl;
 QueueHandle_t queueFlow;
 QueueHandle_t queueHeight;
@@ -163,7 +167,7 @@ QueueHandle_t queuelaserFlow;
 TimerHandle_t myTimer1ms;
 
 QueueHandle_t queueClaw;
-
+QueueHandle_t queueSlam;
 
 
 SYSTEM::SYSTEM()
@@ -222,9 +226,10 @@ void SYSTEM::taskCreat()
 //	isFlowTaskCreatSuccess = xTaskCreate((TaskFunction_t)flow_main, "flowTask", (uint16_t)(128 * 4), NULL, (osPriority_t) osPriorityAboveNormal7, &flowTaskHandle);
 
 	/* 在这里添加你的任务 */
-	xTaskCreate((TaskFunction_t)tskLog, 			"App.Log",    (uint16_t)(128 * 4), NULL, (osPriority_t) osPriorityAboveNormal2, &Log_Handle);
+//	xTaskCreate((TaskFunction_t)tskLog, 			"App.Log",    (uint16_t)(128 * 4), NULL, (osPriority_t) osPriorityAboveNormal2, &Log_Handle);
 	xTaskCreate((TaskFunction_t)laserFlow_main, 			"laserFlow",    (uint16_t)(128 * 4), NULL, (osPriority_t) osPriorityAboveNormal5, &laserFlowTaskHandle);
 	isClawTaskCreatSuccess = xTaskCreate ((TaskFunction_t)claw_main, "clawTask", (uint16_t)(256 * 4), NULL, (osPriority_t) osPriorityRealtime, &clawTaskHandle);
+	isSlamTaskCreatSuccess = xTaskCreate ((TaskFunction_t)slam_main, "slamTask", (uint16_t)(256 * 4), NULL, (osPriority_t) osPriorityRealtime, &slamTaskHandle);
 	/* 在这里添加你的任务 */
 
 }
@@ -294,7 +299,7 @@ void SYSTEM::queueCreat()
     queuetrajectoryData = xQueueCreate(1,sizeof(trajectory_msg));
     queuelaserFlow = xQueueCreate(1,sizeof(laserFlow_msg));
     queueClaw = xQueueCreate(1,sizeof(CLAW_msg));
-
+    queueSlam = xQueueCreate(1,sizeof(SLAM_msg));
 	/* 在这里添加你的消息队列 */
 
 }
@@ -335,7 +340,7 @@ void TIM5_IRQHandler(void)
 		}
 		if(_cnt%taskPeriod[2] == taskPeriod[2]-1)
 		{
-			osSemaphoreRelease(semLog);
+//			osSemaphoreRelease(semLog);
 //			osSemaphoreRelease(semRm3100);
 			osSemaphoreRelease(semEskf);
 //			osSemaphoreRelease(semEskf_baro);

@@ -143,6 +143,10 @@ extern SemaphoreHandle_t semlaserFlow;
 extern TaskHandle_t clawTaskHandle;
 extern void claw_main(void *argument);
 
+/* Definitions for slamTask */
+extern TaskHandle_t slamTaskHandle;
+extern void slam_main(void *argument);
+
 //自己创建的任务
 extern QueueHandle_t queuePID;
 extern QueueHandle_t queueInloopControl;
@@ -180,6 +184,7 @@ extern QueueHandle_t queueFlyPoint;
 extern QueueHandle_t queueTargetBuffer;
 extern QueueHandle_t queuelaserFlow;
 extern QueueHandle_t queueClaw;
+extern QueueHandle_t queueSlam;
 
 void Timer1msCallback(void *argument);
 
@@ -231,7 +236,7 @@ private:
 	BaseType_t isTranTaskCreatSuccess;		//数据传输任务创建成功标志位
 	BaseType_t isTranReceiveTaskCreatSuccess;		//数据传输任务创建成功标志位
 	BaseType_t isClawTaskCreatSuccess;		//爪子数据获取任务创建成功标志位
-
+	BaseType_t isSlamTaskCreatSuccess;		//SLAM数据获取任务创建成功标志位
 };
 
 #endif

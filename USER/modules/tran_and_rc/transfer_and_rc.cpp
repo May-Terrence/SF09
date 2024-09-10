@@ -1748,7 +1748,7 @@ bool TRAN::uart_Send_User(void)//航点
 
 	vs16 temp;
 	tran.TxDat[2] = 0xF1;
-	tran.TxDat[3] = 42;
+	tran.TxDat[3] = 48;
 
 	temp = control_data.X_command[0]*100;					//user_data1	X位置期望
 	tran.TxDat[4] = BYTE1(temp);
@@ -1815,33 +1815,45 @@ bool TRAN::uart_Send_User(void)//航点
 	tran.TxDat[30] = BYTE1(temp);
 	tran.TxDat[31] = BYTE0(temp);
 
-	temp = control_data.FlightStatus;
+	temp = control_data.FlightStatus*100;
 	tran.TxDat[32] = BYTE1(temp);
 	tran.TxDat[33] = BYTE0(temp);
 
-	temp = control_data.Pos_estimate[0];
+	temp = control_data.Pos_estimate[0]*100;
 	tran.TxDat[34] = BYTE1(temp);
 	tran.TxDat[35] = BYTE0(temp);
 
-	temp = control_data.Pos_estimate[1];
+	temp = control_data.Pos_estimate[1]*100;
 	tran.TxDat[36] = BYTE1(temp);
 	tran.TxDat[37] = BYTE0(temp);
 
-	temp = control_data.enable_Grab_flag;
+	temp = control_data.enable_Grab_flag*100;
 	tran.TxDat[38] = BYTE1(temp);
 	tran.TxDat[39] = BYTE0(temp);
 
-	temp = laserFlow.VelxFil;
+	temp = control_data.X_err_estimate*100;
 	tran.TxDat[40] = BYTE1(temp);
 	tran.TxDat[41] = BYTE0(temp);
 
-	temp = laserFlow.VelxFil;
+	temp = control_data.Y_err_estimate*100;
 	tran.TxDat[42] = BYTE1(temp);
 	tran.TxDat[43] = BYTE0(temp);
 
-	temp = laserFlow.heightFil;
+	temp = control_data.XY_err_estimate*100;
 	tran.TxDat[44] = BYTE1(temp);
 	tran.TxDat[45] = BYTE0(temp);
+
+	temp = laserFlow.VelxFil*100;
+	tran.TxDat[46] = BYTE1(temp);
+	tran.TxDat[47] = BYTE0(temp);
+
+	temp = laserFlow.VelxFil*100;
+	tran.TxDat[48] = BYTE1(temp);
+	tran.TxDat[49] = BYTE0(temp);
+
+	temp = laserFlow.heightFil*100;
+	tran.TxDat[50] = BYTE1(temp);
+	tran.TxDat[51] = BYTE0(temp);
 //
 //	temp = control_output_msg.mt_output[0];					//user_data15	电机1PWM
 //	tran.TxDat[32] = BYTE1(temp);
@@ -1893,9 +1905,9 @@ bool TRAN::uart_Send_User(void)//航点
 
 
 	uint8_t sum = 0;
-	for(uint8_t i=0; i<46; i++) sum += TxDat[i];
-	TxDat[46] = sum;
-	return uart_Send_DMA((u8 *)TxDat, 47);
+	for(uint8_t i=0; i<52; i++) sum += TxDat[i];
+	TxDat[52] = sum;
+	return uart_Send_DMA((u8 *)TxDat, 53);
 }
 #endif
 

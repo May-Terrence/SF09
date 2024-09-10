@@ -54,6 +54,7 @@ private:
 //	RC_command_msg rcCommand;
 	gps_msg gps;
 	laserFlow_msg laserFlow;
+	CLAW_msg claw_msg;
 
 //	float roll ,pitch,yaw;
 //	int time;

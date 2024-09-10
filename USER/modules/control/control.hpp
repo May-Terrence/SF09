@@ -241,7 +241,11 @@ typedef struct
 	float relative_height;
 
 	float Pos_estimate[2]{0};//估计位置
+	float X_err_estimate{0},Y_err_estimate{0},XY_err_estimate{0}; //估计误差
 	bool  enable_Grab_flag{false};
+
+	float end_command[2]{0};
+	float end_yaw;
 }sLOOPIO;
 
 
@@ -336,7 +340,8 @@ public:
 	void calcCircularAngle(float iniAng,float goalAng,int direction);
 	void StatusClear(void);
 	void virtualFence(void);
-
+	void add_differentiation(void);
+	void remove_differentiation(void);
 
 	PID pid[PID_NUM];
 

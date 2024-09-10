@@ -384,7 +384,10 @@ typedef struct
 	double output1[3];
 
 	float Pos_estimate[2]{0};//估计位置
+	float X_err_estimate{0},Y_err_estimate{0},XY_err_estimate{0}; //估计误差
 	bool  enable_Grab_flag{false};
+
+	float X_pos0,Y_pos0,Z_pos0;
 
 }control_transfer_msg;
 typedef struct
@@ -505,17 +508,15 @@ typedef struct
 typedef struct
 {
 	float Pos[3];//X,Y,Z
-	float Vel[3];
-	float Ang[3];//Roll,Pitch,Yaw
-
-	float PosFil[3];
-	float VelFil[3];
-	float AngFil[3];
-	uint32_t timestamp;
-	uint32_t CycleTime_us;
+	float Yaw;
+	int star;
+	int model;
 }CLAW_msg;
 
-
+typedef struct
+{
+	float Pos[3];//X,Y,Z
+}SLAM_msg;
 
 #ifdef __cplusplus
 }

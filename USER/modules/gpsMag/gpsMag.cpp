@@ -131,10 +131,10 @@ void UART4_IRQHandler(void)
 //bool TxFlag;
 void DMA1_Stream4_IRQHandler(void)  //发送DMA中断
 {
-	if (LL_DMA_IsActiveFlag_FE4(DMA1) != RESET){
-		gpsmag.fifo_err_cnt ++;
-		LL_DMA_ClearFlag_FE4(DMA1);
-	}
+//	if (LL_DMA_IsActiveFlag_FE4(DMA1) != RESET){
+//		gpsmag.fifo_err_cnt ++;
+//		LL_DMA_ClearFlag_FE4(DMA1);
+//	}
 
 	LL_DMA_DisableStream(DMA1,LL_DMA_STREAM_4);
 	LL_DMA_ClearFlag_TC4(DMA1);
@@ -248,7 +248,6 @@ void GPSMAG::GpsMag_Init(void)
 	LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_4, GPS_TX_LEN);
 	LL_DMA_ClearFlag_TC4(DMA1);
 	LL_DMA_EnableIT_TC(DMA1, LL_DMA_STREAM_4);
-//	LL_DMA_EnableIT_FE(DMA1, LL_DMA_STREAM_4);
 	LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_4);
 	/* 配置发送DMA */
 

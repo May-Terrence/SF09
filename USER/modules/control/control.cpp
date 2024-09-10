@@ -7,6 +7,7 @@
 #include "control.hpp"
 #include "alloc/dir_alloc.hpp"
 #include "claw_tran/claw_tran.hpp"
+#include "openlog/USART_SD_Log.hpp"
 
 CONTROL control;
 DIR_ALLOC dir_alloc;
@@ -167,7 +168,7 @@ void CONTROL::Control_Init()
 		//pidXRate
 		pidXRate->Kp = 1.5f;
 		pidXRate->Ki = 0.0f;
-		pidXRate->Kd = 0.2f;
+		pidXRate->Kd = 0.0f;
 		pidXRate->Kb = 0.0f;
 		pidXRate->eLimit = 20;
 		pidXRate->iLimit = 20;
@@ -176,7 +177,7 @@ void CONTROL::Control_Init()
 		//pidYRate
 		pidYRate->Kp = 1.5f;
 		pidYRate->Ki = 0.0f;
-		pidYRate->Kd = 0.2f;
+		pidYRate->Kd = 0.0f;
 		pidYRate->Kb = 0.0f;
 		pidYRate->eLimit = 20;
 		pidYRate->iLimit = 20;
@@ -194,7 +195,7 @@ void CONTROL::Control_Init()
 		//pidX
 		pidX->Kp = 0.5f;
 		pidX->Ki = 0.0f;
-		pidX->Kd = 0.05f;
+		pidX->Kd = 0.0f;
 		pidX->Kb = 0.0f;
 		pidX->eLimit = 200;
 		pidX->iLimit = 200;
@@ -203,7 +204,7 @@ void CONTROL::Control_Init()
 		//pidY
 		pidY->Kp = 0.5f;
 		pidY->Ki = 0.0f;
-		pidY->Kd = 0.05f;
+		pidY->Kd = 0.0f;
 		pidY->Kb = 0.0f;
 		pidY->eLimit = 200;
 		pidY->iLimit = 200;
@@ -487,6 +488,21 @@ void CONTROL::virtualFence(){
 	}
 	else isexceedLimit=false;
 }
+
+void CONTROL::add_differentiation(){
+	pidXRate->Kd = 0.2f;
+	pidYRate->Kd = 0.2f;
+	pidX->Kd = 0.05f;
+	pidY->Kd = 0.05f;
+}
+
+void CONTROL::remove_differentiation(){
+	pidXRate->Kd = 0.0f;
+	pidYRate->Kd = 0.0f;
+	pidX->Kd = 0.0f;
+	pidY->Kd = 0.0f;
+}
+
 void CONTROL::Out_Loop_XY_Pre2()
 {
 	double X_err,Y_err,XY_err;
@@ -701,6 +717,8 @@ void CONTROL::OneKeyTakeOff(void)
 	sinY = sinf(CtrlFbck.Ang[2]);
 	cosY = cosf(CtrlFbck.Ang[2]);
 
+//	if(!slam.Ready_Take_off || !claw.isOpen) return;
+
 	if(CtrlIO.FlightStatus == IDLING)
 	{
 		static bool ini=false;
@@ -800,6 +818,7 @@ void CONTROL::Auto_flypoint()
 	switch(Ctrltrack.PTP_Status)
 	{
 	case PTP_hover://定点
+		add_differentiation();
 		CtrlLpIO.Vel_command[0] = fConstrain(CtrlLpIO.Vel_command[0],-1,1);
 		CtrlLpIO.Vel_command[1] = fConstrain(CtrlLpIO.Vel_command[1],-1,1);
 		if(point_list[num].enable ==1 && Ctrltrack.flypoint_start == true){
@@ -818,6 +837,7 @@ void CONTROL::Auto_flypoint()
 //		else Turn_Heading(fly_yaw*D2R);
 		if (Turn_Heading(Ctrltrack.azimuth)){
 				Ctrltrack.PTP_Status = PTP_XY_Fly;
+				remove_differentiation();
 				start << CtrlFbck.X[0],CtrlFbck.Y[0];//以当前点为起点
 				TempBodyFrame << CtrlFbck.XH[0],CtrlFbck.YH[0]; //临时坐标系原点
 				temp_height = CtrlFbck.Z[0]; //当前高度为临时高度
@@ -1092,7 +1112,6 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 {
 	xQueuePeek(queueRCCommand, &rcCommand, 0);
 	double X_err,Y_err,Z_err;
-	float X_err_estimate,Y_err_estimate,XY_err_estimate;
 	float  Vel_tol=0.4;
 	static u16 count=0;
 	float  GE1=GE_SPEED;
@@ -1140,6 +1159,7 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 			if( Turn_Heading(Ctrltrack.azimuth) )
 			{
 				CtrlIO.FlightStatus = RETURNING;
+				remove_differentiation();
 				CtrlLpIO.Pos_command[0] = CtrlLpIO.X_pos0;
 				CtrlLpIO.Pos_command[1] = CtrlLpIO.Y_pos0;
 			}
@@ -1150,6 +1170,7 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 			if( Turn_Heading( Ctrltrack.azimuth ) )
 			{
 				CtrlIO.FlightStatus = RETURNING;
+				remove_differentiation();
 				CtrlLpIO.Pos_command[0] = X;
 				CtrlLpIO.Pos_command[1] = Y;
 			}
@@ -1205,23 +1226,27 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 //					rcCommand.OneKeyLanding = false;
 //				}
 //			}
-			CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0-0.15f;
-			Z_err = CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0];
-			CtrlLpIO.Pos_err[2] = Z_err;
-			CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
-			if(rcCommand.ReLanding){
-				CtrlLpIO.Vel_command[2] = 0.3;
-				CtrlLpIO.Vel_command[2] = fConstrain(CtrlLpIO.Vel_command[2],-1,0.5);
-				CtrlLpIO.landing_acc_mode = TarHit(&CtrlLpIO.alt_landing_cnt,Vel_tol,CtrlLpIO.Vel_err[2]);
-				if(CtrlLpIO.landing_acc_mode == false){
-					if(CtrlFbck.Z[1]<=GE1  && (acc_fil.acc_filter[2]+OneG)<=GE2){
-						CtrlIO.FlightStatus = GE;
-						rcCommand.OneKeyLanding = false;
-						rcCommand.IsAir = 0;
-						rcCommand.ReLanding = false;
-					}
-				}
-			}
+
+//			if(Turn_Heading(CtrlLpIO.end_yaw)){
+				CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0-0.15f;
+				Z_err = CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0];
+				CtrlLpIO.Pos_err[2] = Z_err;
+				CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
+//			}
+
+//			if(rcCommand.ReLanding){
+//				CtrlLpIO.Vel_command[2] = 0.3;
+//				CtrlLpIO.Vel_command[2] = fConstrain(CtrlLpIO.Vel_command[2],-1,0.5);
+//				CtrlLpIO.landing_acc_mode = TarHit(&CtrlLpIO.alt_landing_cnt,Vel_tol,CtrlLpIO.Vel_err[2]);
+//				if(CtrlLpIO.landing_acc_mode == false){
+//					if(CtrlFbck.Z[1]<=GE1  && (acc_fil.acc_filter[2]+OneG)<=GE2){
+//						CtrlIO.FlightStatus = GE;
+//						rcCommand.OneKeyLanding = false;
+//						rcCommand.IsAir = 0;
+//						rcCommand.ReLanding = false;
+//					}
+//				}
+//			}
 			//NED系下
 			static int cnt = 0;
 			float ax = acc_fil.acc_filter[0];
@@ -1230,21 +1255,14 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 			float AY = cos(CtrlFbck.Ang[0])*ay;
 			CtrlLpIO.Pos_estimate[0] = CtrlFbck.X[0] + CtrlFbck.X[1] + 0.5*AX;//一秒后位置预测
 			CtrlLpIO.Pos_estimate[1] = CtrlFbck.Y[0] + CtrlFbck.Y[1] + 0.5*AY;
-			X_err_estimate = abs(CtrlLpIO.Pos_command[0] - CtrlLpIO.Pos_estimate[0]);
-			Y_err_estimate = abs(CtrlLpIO.Pos_command[1] - CtrlLpIO.Pos_estimate[1]);
-			XY_err_estimate = sqrt(SQR(X_err_estimate)+SQR(Y_err_estimate));
+			CtrlLpIO.X_err_estimate = abs(CtrlLpIO.Pos_command[0] - CtrlLpIO.Pos_estimate[0]);
+			CtrlLpIO.Y_err_estimate = abs(CtrlLpIO.Pos_command[1] - CtrlLpIO.Pos_estimate[1]);
+			CtrlLpIO.XY_err_estimate = sqrt(SQR(CtrlLpIO.X_err_estimate)+SQR(CtrlLpIO.Y_err_estimate));
 			if(abs(CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0])<0.02){
-				if(X_err_estimate<0.02 && Y_err_estimate<0.02 && XY_err_estimate<0.05){
+				if(CtrlLpIO.X_err_estimate<0.02 && CtrlLpIO.Y_err_estimate<0.02 && CtrlLpIO.XY_err_estimate<0.05){
 					CtrlLpIO.enable_Grab_flag = true;
 					if(++cnt>10){
-						claw.TxDat[0] = 0xCC;
-						claw.TxDat[1] = 0xCC;
-						claw.TxDat[2] = 1;
-						claw.TxDat[3] = 0x01;
-						u8 sum = 0;
-						for(u8 i=0;i<4;i++)sum += claw.TxDat[i];
-							claw.TxDat[4] = sum;
-						claw.uart_Send_DMA((u8 *)claw.TxDat, 5);
+						claw.Close_Request_Tran();
 					}
 					else{
 						cnt = 0;

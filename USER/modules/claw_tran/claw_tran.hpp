@@ -41,6 +41,8 @@ public:
 	void claw_Init(void);
 	void claw_Update(void);
 	bool uart_Send_DMA(uint8_t * pData,uint16_t Size);
+	void Open_Request_Tran(void);
+	void Close_Request_Tran(void);
 
 	HAL_LockTypeDef LockRx;
 	bool  TxFlag;		//标志位
@@ -49,6 +51,11 @@ public:
 	uint8_t RxRawDat[CLAW_RX_LEN];   //数据
 	uint8_t TxDat[CLAW_TX_LEN];
 	char RxDat[CLAW_RX_LEN];
+
+	bool isOpen{false};
+	bool isClose{true};
+	bool isUpdate{false};
+	CLAW_msg claw_msg;
 
 private:
 	USART_TypeDef * huart;
@@ -67,9 +74,6 @@ private:
 	bool  Update;		//更新  --
 	eSTA  Sta;			//状态  --
 	eERR  Err;			//错误信息  --
-
-	CLAW_msg claw_msg;
-
 };
 
 #endif

@@ -7,6 +7,8 @@
 #include "control_step.hpp"
 #include <tran_and_rc/transfer_and_rc.hpp>
 #include "path_follow/pathFollow.hpp"
+#include "claw_tran/claw_tran.hpp"
+#include "openlog/USART_SD_Log.hpp"
 
 CONTROL_STEP control_step;
 
@@ -270,10 +272,25 @@ void CONTROL_STEP::Control_Step()
 		case 3://全自控，航点
 
 			//原模式三
+//			  if(slam.Ready_Take_off && claw.isClose) claw.Open_Request_Tran();
+//			  if(slam.Ready_Take_off && claw.isOpen && !rcCommand.TakeOffFinish) OneKeyTakeOff();
 			  if(rcCommand.OneKeyTakeoff == true)  OneKeyTakeOff();
 			  if(CtrlIO.FlightStatus == AIR && rcCommand.OneKeyLanding == false) Auto_flypoint();
 //			  if(CtrlIO.FlightStatus == AIR && rcCommand.OneKeyLanding == false) Auto_flycircle();//飞圆，测试前请确保磁力计数据正常
 			  if(rcCommand.OneKeyLanding == true)  OneKeyLanding(0,0,false,true);
+//			  if(slam.Ready_Land){
+//			  	  static bool isReady = false;
+//			  	  claw.isUpdate = false;
+//			  	  if(claw.isUpdate){
+//					  xQueuePeek(queueClaw, &claw_msg,0);
+//
+//					  CtrlLpIO.end_command[0] = CtrlLpIO.X_pos0 + claw_msg.Pos[0];
+//					  CtrlLpIO.end_command[0] = CtrlLpIO.Y_pos0 + claw_msg.Pos[1];
+//			  	  	  CtrlLpIO.end_yaw = claw_msg.Yaw;
+//			  	  	  isReady = true;
+//			  	  }
+//			  	  if(isReady) OneKeyLanding(X_command,Y_command,true,true);
+//			  }
 
 //			  trackPath();
 //			  frog_jump();
@@ -472,6 +489,13 @@ void CONTROL_STEP::Tranfer_Data_Updata(void)
 	control_data.Pos_estimate[0] = CtrlLpIO.Pos_estimate[0];
 	control_data.Pos_estimate[1] = CtrlLpIO.Pos_estimate[1];
 	control_data.enable_Grab_flag = CtrlLpIO.enable_Grab_flag;
+	control_data.X_err_estimate = CtrlLpIO.X_err_estimate;
+	control_data.Y_err_estimate = CtrlLpIO.Y_err_estimate;
+	control_data.XY_err_estimate = CtrlLpIO.XY_err_estimate;
+
+	control_data.X_pos0 = CtrlLpIO.X_pos0;
+	control_data.Y_pos0 = CtrlLpIO.Y_pos0;
+	control_data.Z_pos0 = CtrlLpIO.Z_pos0;
 
 	xQueueOverwrite(queueControlTransfer,&control_data);
 }
