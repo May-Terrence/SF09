@@ -6,6 +6,7 @@
  */
 #include "control.hpp"
 #include "alloc/dir_alloc.hpp"
+#include "claw_tran/claw_tran.hpp"
 
 CONTROL control;
 DIR_ALLOC dir_alloc;
@@ -706,14 +707,16 @@ void CONTROL::OneKeyTakeOff(void)
 		if( !ini ) {
 			CtrlLpIO.X_pos0 = CtrlFbck.X[0];//记录xy当前位置
 			CtrlLpIO.Y_pos0 = CtrlFbck.Y[0];
-			ini = true;
+			CtrlLpIO.Z_pos0 = CtrlFbck.Z[0];
+
 			CtrlLpIO.Pos_command[0] = CtrlLpIO.X_pos0;
 			CtrlLpIO.Pos_command[1] = CtrlLpIO.Y_pos0;
-			CtrlLpIO.Z_pos0 = CtrlFbck.Z[0];
+			CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0 - 0.8f;//当前高度+3m作为高度给定
+			CtrlLpIO.Ang_command[2] = CtrlFbck.Ang[2];//锁航向
+
+			ini = true;
 		}
 		CtrlIO.FlightStatus = LAUNCH;
-		CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0 - 1.5f;//当前高度+3m作为高度给定
-		CtrlLpIO.Ang_command[2] = CtrlFbck.Ang[2];//锁航向
 	}
 	if(CtrlIO.FlightStatus == LAUNCH )
 	{
@@ -743,6 +746,7 @@ void CONTROL::OneKeyTakeOff(void)
 	if ( Ctrltrack.POS_err <= CtrlLpIO.POS_thr && CtrlIO.FlightStatus == TAKEOFF )
 	{
 		CtrlIO.FlightStatus = AIR;
+		rcCommand.IsAir = 1;
 		rcCommand.OneKeyTakeoff = false;
 		rcCommand.TakeOffFinish = true;
 	}
@@ -1088,6 +1092,7 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 {
 	xQueuePeek(queueRCCommand, &rcCommand, 0);
 	double X_err,Y_err,Z_err;
+	float X_err_estimate,Y_err_estimate,XY_err_estimate;
 	float  Vel_tol=0.4;
 	static u16 count=0;
 	float  GE1=GE_SPEED;
@@ -1214,6 +1219,36 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 						rcCommand.OneKeyLanding = false;
 						rcCommand.IsAir = 0;
 						rcCommand.ReLanding = false;
+					}
+				}
+			}
+			//NED系下
+			static int cnt = 0;
+			float ax = acc_fil.acc_filter[0];
+			float ay = acc_fil.acc_filter[1];
+			float AX = cos(CtrlFbck.Ang[1])*ax + sin(CtrlFbck.Ang[0])*sin(CtrlFbck.Ang[1])*ay;//机体系到地球系的旋转矩阵只取前两列
+			float AY = cos(CtrlFbck.Ang[0])*ay;
+			CtrlLpIO.Pos_estimate[0] = CtrlFbck.X[0] + CtrlFbck.X[1] + 0.5*AX;//一秒后位置预测
+			CtrlLpIO.Pos_estimate[1] = CtrlFbck.Y[0] + CtrlFbck.Y[1] + 0.5*AY;
+			X_err_estimate = abs(CtrlLpIO.Pos_command[0] - CtrlLpIO.Pos_estimate[0]);
+			Y_err_estimate = abs(CtrlLpIO.Pos_command[1] - CtrlLpIO.Pos_estimate[1]);
+			XY_err_estimate = sqrt(SQR(X_err_estimate)+SQR(Y_err_estimate));
+			if(abs(CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0])<0.02){
+				if(X_err_estimate<0.02 && Y_err_estimate<0.02 && XY_err_estimate<0.05){
+					CtrlLpIO.enable_Grab_flag = true;
+					if(++cnt>10){
+						claw.TxDat[0] = 0xCC;
+						claw.TxDat[1] = 0xCC;
+						claw.TxDat[2] = 1;
+						claw.TxDat[3] = 0x01;
+						u8 sum = 0;
+						for(u8 i=0;i<4;i++)sum += claw.TxDat[i];
+							claw.TxDat[4] = sum;
+						claw.uart_Send_DMA((u8 *)claw.TxDat, 5);
+					}
+					else{
+						cnt = 0;
+						CtrlLpIO.enable_Grab_flag = false;
 					}
 				}
 			}

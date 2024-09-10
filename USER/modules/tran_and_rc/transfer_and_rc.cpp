@@ -427,6 +427,11 @@ void TRAN::uart_Send_DMA_loop(void)
 		uart_Send_Status();
 		break;
 	case 7:
+//		if(send_log == true)
+//		{
+//			if(uart_Send_Base_Station_Data(space,buffer,read_index))
+//				send_log = false;
+//		}
 //		uart_Send_MotorPWM();
 		break;
 	case 9:
@@ -864,6 +869,24 @@ bool TRAN::uart_Send_NED(void)
 	TxDat[len+4] = sum;
 	return uart_Send_DMA((u8 *)TxDat, len+5);
 }
+
+//bool TRAN::uart_Send_Base_Station_Data(uint16_t len,uint8_t *buffer,uint16_t index)
+//{
+//	if(tran.TxFlag == true) return false;
+//	tran.TxDat[2] = 0xED;
+//	tran.TxDat[3] = (u8)(len+1);
+//	tran.TxDat[4] = 0x00;
+//
+//	for(int j=0;j<len;j++)
+//	{
+//		tran.TxDat[j+5] = buffer[index+j];
+//	}
+//
+//	uint8_t sum = 0;
+//	for(uint8_t i=0; i<(len+5); i++) sum += TxDat[i];
+//	TxDat[len+5] = sum;
+//	return uart_Send_DMA((u8 *)TxDat, len+6);
+//}
 /*
 bool TRAN::uart_Send_User_control_data(void)
 {
@@ -1056,7 +1079,7 @@ bool TRAN::uart_Send_User_control_data(void)
 //	TxDat[44] = sum;
 //	return uart_Send_DMA((u8 *)TxDat, 45);
 //}
-#define __outloop  //__sensorcali传感器校正,__outloop外环,__trajectory航点,__trajectory2航点模式调试
+#define __trajectory3  //__sensorcali传感器校正,__outloop外环,__trajectory航点,__trajectory2航点模式调试
 
 #ifdef __inloop
 bool TRAN::uart_Send_User(void)		//内环
@@ -1720,21 +1743,16 @@ bool TRAN::uart_Send_User(void)//航点
 	xQueuePeek(queueGps,&gps,0);
 	xQueuePeek(queueESKF,&eskf,0);
 	xQueuePeek(queueTargetBuffer,&target_buffer,0);
-
 	xQueuePeek(queueAccDatFil,&acc_filter,0);
+	xQueuePeek(queuelaserFlow,&laserFlow,0);
 
 	vs16 temp;
 	tran.TxDat[2] = 0xF1;
-	tran.TxDat[3] = 40;
+	tran.TxDat[3] = 42;
 
 	temp = control_data.X_command[0]*100;					//user_data1	X位置期望
 	tran.TxDat[4] = BYTE1(temp);
 	tran.TxDat[5] = BYTE0(temp);
-
-//	temp = testCounter;					//user_data1	X位置期望
-//	tran.TxDat[4] = BYTE1(temp);
-//	tran.TxDat[5] = BYTE0(temp);
-//	testCounter++;
 
 	temp = control_data.Y_command[0]*100;					//user_data2	Y位置期望
 	tran.TxDat[6] = BYTE1(temp);
@@ -1744,15 +1762,15 @@ bool TRAN::uart_Send_User(void)//航点
 	tran.TxDat[8] = BYTE1(temp);
 	tran.TxDat[9] = BYTE0(temp);
 
-	temp = control_data.X[0]*100;							//user_data4	X位置反馈值
+	temp = eskf.Pos[0]*100;							//user_data4	X位置反馈值
 	tran.TxDat[10] = BYTE1(temp);
 	tran.TxDat[11] = BYTE0(temp);
 
-	temp = control_data.Y[0]*100;							//user_data5	Y位置反馈值
+	temp = eskf.Pos[1]*100;							//user_data5	Y位置反馈值
 	tran.TxDat[12] = BYTE1(temp);
 	tran.TxDat[13] = BYTE0(temp);
 
-	temp = control_data.Z[0]*100;							//user_data6	Z位置反馈值
+	temp = eskf.Pos[2]*100;							//user_data6	Z位置反馈值
 	tran.TxDat[14] = BYTE1(temp);
 	tran.TxDat[15] = BYTE0(temp);
 
@@ -1796,6 +1814,34 @@ bool TRAN::uart_Send_User(void)//航点
 	temp = control_data.Ang[2]*R2D*100;						//user_data14	偏航角反馈值
 	tran.TxDat[30] = BYTE1(temp);
 	tran.TxDat[31] = BYTE0(temp);
+
+	temp = control_data.FlightStatus;
+	tran.TxDat[32] = BYTE1(temp);
+	tran.TxDat[33] = BYTE0(temp);
+
+	temp = control_data.Pos_estimate[0];
+	tran.TxDat[34] = BYTE1(temp);
+	tran.TxDat[35] = BYTE0(temp);
+
+	temp = control_data.Pos_estimate[1];
+	tran.TxDat[36] = BYTE1(temp);
+	tran.TxDat[37] = BYTE0(temp);
+
+	temp = control_data.enable_Grab_flag;
+	tran.TxDat[38] = BYTE1(temp);
+	tran.TxDat[39] = BYTE0(temp);
+
+	temp = laserFlow.VelxFil;
+	tran.TxDat[40] = BYTE1(temp);
+	tran.TxDat[41] = BYTE0(temp);
+
+	temp = laserFlow.VelxFil;
+	tran.TxDat[42] = BYTE1(temp);
+	tran.TxDat[43] = BYTE0(temp);
+
+	temp = laserFlow.heightFil;
+	tran.TxDat[44] = BYTE1(temp);
+	tran.TxDat[45] = BYTE0(temp);
 //
 //	temp = control_output_msg.mt_output[0];					//user_data15	电机1PWM
 //	tran.TxDat[32] = BYTE1(temp);
@@ -1813,33 +1859,33 @@ bool TRAN::uart_Send_User(void)//航点
 //	tran.TxDat[38] = BYTE1(temp);
 //	tran.TxDat[39] = BYTE0(temp);
 
-	temp = target_buffer.next_target_ned[0]*100;				//user_data15	下一个目标航点X位置
-	tran.TxDat[32] = BYTE1(temp);
-	tran.TxDat[33] = BYTE0(temp);
+//	temp = target_buffer.next_target_ned[0]*100;				//user_data15	下一个目标航点X位置
+//	tran.TxDat[32] = BYTE1(temp);
+//	tran.TxDat[33] = BYTE0(temp);
 
-	temp = target_buffer.next_target_ned[1]*100;				//user_data16	下一个目标航点Y
-	tran.TxDat[34] = BYTE1(temp);
-	tran.TxDat[35] = BYTE0(temp);
+//	temp = target_buffer.next_target_ned[1]*100;				//user_data16	下一个目标航点Y
+//	tran.TxDat[34] = BYTE1(temp);
+//	tran.TxDat[35] = BYTE0(temp);
 
-	temp = target_buffer.next_target_ned[2]*100;				//user_data17	下一个目标航点Z
-	tran.TxDat[36] = BYTE1(temp);
-	tran.TxDat[37] = BYTE0(temp);
+//	temp = target_buffer.next_target_ned[2]*100;				//user_data17	下一个目标航点Z
+//	tran.TxDat[36] = BYTE1(temp);
+//	tran.TxDat[37] = BYTE0(temp);
 
-	temp = target_buffer.hover_time_Trajectory*100;					//user_data18	悬停时间
-	tran.TxDat[38] = BYTE1(temp);
-	tran.TxDat[39] = BYTE0(temp);
+//	temp = target_buffer.hover_time_Trajectory*100;					//user_data18	悬停时间
+//	tran.TxDat[38] = BYTE1(temp);
+//	tran.TxDat[39] = BYTE0(temp);
 
-	temp = gps.gpsPosAccuracy*100;							//user_data19	RTK精度
-	tran.TxDat[40] = BYTE1(temp);
-	tran.TxDat[41] = BYTE0(temp);
+//	temp = gps.gpsPosAccuracy*100;							//user_data19	RTK精度
+//	tran.TxDat[40] = BYTE1(temp);
+//	tran.TxDat[41] = BYTE0(temp);
 
 //	temp = eskf.Pos[2]*100;							//user_data20	RTK高度
 //	tran.TxDat[42] = BYTE1(temp);
 //	tran.TxDat[43] = BYTE0(temp);
 
-	temp = acc_filter.acc_filter[2]*100;
-	tran.TxDat[42] = BYTE1(temp);
-	tran.TxDat[43] = BYTE0(temp);
+//	temp = acc_filter.acc_filter[2]*100;
+//	tran.TxDat[42] = BYTE1(temp);
+//	tran.TxDat[43] = BYTE0(temp);
 
 //	temp = control_data.trajectory_status;					//user_data19	轨迹模式状态
 //	tran.TxDat[42] = BYTE1(temp);
@@ -1847,9 +1893,9 @@ bool TRAN::uart_Send_User(void)//航点
 
 
 	uint8_t sum = 0;
-	for(uint8_t i=0; i<44; i++) sum += TxDat[i];
-	TxDat[44] = sum;
-	return uart_Send_DMA((u8 *)TxDat, 45);
+	for(uint8_t i=0; i<46; i++) sum += TxDat[i];
+	TxDat[46] = sum;
+	return uart_Send_DMA((u8 *)TxDat, 47);
 }
 #endif
 

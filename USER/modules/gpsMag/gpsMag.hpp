@@ -74,6 +74,10 @@ public:
 	HAL_LockTypeDef LockRx;
 	bool  RxFlag;		//接收标志位
 	bool  TxFlag;		//发送标志位
+
+	uint32_t tran_err_cnt {0};
+	uint32_t fifo_err_cnt {0};
+
 	USART_TypeDef * huart;
 
 	bool Gps_Cali();

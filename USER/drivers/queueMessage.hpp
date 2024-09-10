@@ -383,6 +383,9 @@ typedef struct
 	float Acc_command[3];
 	double output1[3];
 
+	float Pos_estimate[2]{0};//估计位置
+	bool  enable_Grab_flag{false};
+
 }control_transfer_msg;
 typedef struct
 {

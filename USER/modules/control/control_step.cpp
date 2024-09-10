@@ -246,6 +246,12 @@ void CONTROL_STEP::Control_Step()
 //				  xQueuePeek(queuelaserFlow, &laserFlow, 0);
 //				  CtrlFbck.Z[0] = -laserFlow.heightFil;
 //			}
+			if(CtrlIO.last_control_mode == 3) {
+				CtrlIO.FlightStatus = GROUND;
+				rcCommand.OneKeyLanding = false;
+				rcCommand.IsAir = 0;
+				rcCommand.ReLanding = false;
+			}
 
 			Out_Loop_XY_Pre2();           //水平速度给定，判断定点模式
 			Out_Loop_Z_Pre2();            //高度给定
@@ -462,6 +468,10 @@ void CONTROL_STEP::Tranfer_Data_Updata(void)
 	control_data.XYZ_phase=CtrlLpIO.XYZ_phase;
 	control_data.Jerk_command[0]=CtrlLpIO.Jerk_command[0];
 	control_data.Jerk_command[1]=CtrlLpIO.Jerk_command[1];
+
+	control_data.Pos_estimate[0] = CtrlLpIO.Pos_estimate[0];
+	control_data.Pos_estimate[1] = CtrlLpIO.Pos_estimate[1];
+	control_data.enable_Grab_flag = CtrlLpIO.enable_Grab_flag;
 
 	xQueueOverwrite(queueControlTransfer,&control_data);
 }

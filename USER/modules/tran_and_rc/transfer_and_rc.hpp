@@ -106,8 +106,7 @@ public:
 	bool uart_Send_User(void);
 	bool uart_Send_NED(void);
 	bool uart_Send_Paths(void);
-
-
+	bool uart_Send_Base_Station_Data(uint16_t len,uint8_t *buffer,uint16_t index);
 
 
 	void uart_Receive_Update(void);
@@ -123,6 +122,14 @@ public:
 	bool  TxFlag;		//接收标志位
 	USART_TypeDef * huart;
 	static void set_plot_path();
+
+	bool send_log;
+	uint16_t space;
+	uint8_t buffer[2000];
+	uint16_t read_index;
+
+	uint8_t Rdata[3]={0,1,2};
+	uint16_t Rsize=3;
 
 private:
 	static bool plot_path;

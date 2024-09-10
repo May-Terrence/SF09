@@ -6,6 +6,7 @@
  */
 
 #include <tran_and_rc/ringbuffer.hpp>
+#include <tran_and_rc/transfer_and_rc.hpp>
 #include "string.h"
 
 static uint8_t ringbuffer[RINGBUFFER_LEN];
@@ -74,12 +75,18 @@ uint16_t Read_all_from_ringbuffer(uint8_t *data)
 		uint16_t second_num = read_space - first_num;
 		memcpy(data,&ringbuffer[read_index],first_num);
 		memcpy(&data[first_num],&ringbuffer[0],second_num);
+//		memcpy(tran.buffer,&ringbuffer[read_index],first_num);
+//		memcpy(&tran.buffer[first_num],&ringbuffer[0],second_num);
 	}
 	else
 	{
 		memcpy(data,&ringbuffer[read_index],read_space);
+//		memcpy(tran.buffer,&ringbuffer[read_index],read_space);
 	}
 	read_index  = (read_index + read_space)%RINGBUFFER_LEN;
+//	tran.send_log = true;
+//	tran.space = read_space;
+//	tran.read_index = read_index;
 	return read_space;
 }
 

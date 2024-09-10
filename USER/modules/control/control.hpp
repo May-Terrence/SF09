@@ -240,6 +240,8 @@ typedef struct
 	float indi_fltr_band;
 	float relative_height;
 
+	float Pos_estimate[2]{0};//估计位置
+	bool  enable_Grab_flag{false};
 }sLOOPIO;
 
 

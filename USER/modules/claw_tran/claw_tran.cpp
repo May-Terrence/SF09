@@ -39,7 +39,7 @@ void USART6_IRQHandler(void)
 		claw.RxDataSize = CLAW_RX_LEN - LL_DMA_GetDataLength(DMA2, LL_DMA_STREAM_1);
 
 		do{
-			if(claw.RxRawDat[0] != 0xAU || claw.RxRawDat[1] != claw.RxDataSize) break;
+			if(claw.RxRawDat[0] != 0xCC || claw.RxRawDat[1] != 0xCC || claw.RxRawDat[2] != claw.RxDataSize) break;
 			if(claw.LockRx == HAL_LOCKED)break;
 			claw.LockRx = HAL_LOCKED;
 			memcpy(claw.RxDat,claw.RxRawDat,claw.RxDataSize);
@@ -124,8 +124,35 @@ void DMA2_Stream6_IRQHandler(void)  //发送DMA中断
 	claw.TxFlag = false;
 }
 
+bool CLAW::uart_Send_DMA(uint8_t * pData,uint16_t Size)	//DMA发送
+{
+	if(claw.TxFlag == true) return false;	//串口发送忙,放弃发送该帧数据
+	LL_DMA_DisableStream(DMA2,LL_DMA_STREAM_6);
+	LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_6, Size);
+	LL_DMA_SetMemoryAddress(DMA2, LL_DMA_STREAM_6, (uint32_t)pData);
+	LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_6);
+	claw.TxFlag = true;
+	return true;
+}
+
 void CLAW::claw_Update()
 {
+	if(RxDat[3] == 0x01){
+		for(int i=1; i<4; i++)
+		{
+			claw_msg.Pos[i-1] = ((RxDat[i*4+3]<<24)|(RxDat[i*4+2]<<16)|(RxDat[i*4+1]<<8)|(RxDat[i*4]))*0.0001;
+		}
+
+		claw_msg.Vel[0] = ((RxDat[19]<<24)|(RxDat[18]<<16)|(RxDat[17]<<8)|(RxDat[16]))*0.0001;
+		claw_msg.Vel[1] = ((RxDat[23]<<24)|(RxDat[22]<<16)|(RxDat[21]<<8)|(RxDat[20]))*0.0001;
+		claw_msg.Vel[2] = ((RxDat[27]<<24)|(RxDat[26]<<16)|(RxDat[25]<<8)|(RxDat[24]))*0.0001;
+
+		claw_msg.Ang[0] = ((RxDat[31]<<24)|(RxDat[30]<<16)|(RxDat[29]<<8)|(RxDat[28]))*0.0001;
+		claw_msg.Ang[1] = ((RxDat[35]<<24)|(RxDat[34]<<16)|(RxDat[33]<<8)|(RxDat[32]))*0.0001;
+		claw_msg.Ang[2] = ((RxDat[39]<<24)|(RxDat[38]<<16)|(RxDat[37]<<8)|(RxDat[36]))*0.0001;
+	}
+
+	xQueueOverwrite(queueClaw, &claw_msg);
 }
 
 extern "C" void claw_main(void *argument)

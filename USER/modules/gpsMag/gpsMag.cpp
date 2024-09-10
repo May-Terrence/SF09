@@ -131,6 +131,11 @@ void UART4_IRQHandler(void)
 //bool TxFlag;
 void DMA1_Stream4_IRQHandler(void)  //发送DMA中断
 {
+	if (LL_DMA_IsActiveFlag_FE4(DMA1) != RESET){
+		gpsmag.fifo_err_cnt ++;
+		LL_DMA_ClearFlag_FE4(DMA1);
+	}
+
 	LL_DMA_DisableStream(DMA1,LL_DMA_STREAM_4);
 	LL_DMA_ClearFlag_TC4(DMA1);
 	gpsmag.TxFlag = false;
@@ -138,25 +143,35 @@ void DMA1_Stream4_IRQHandler(void)  //发送DMA中断
 
 bool uart4_Send_DMA(uint8_t * pData,uint16_t Size)	//DMA发送
 {
-//	static int error_cnt = 0;
-//	if(error_cnt>10)
-//	{
+	if (LL_DMA_IsActiveFlag_TE4(DMA1) != RESET) {
+		LL_DMA_DisableStream(DMA1,LL_DMA_STREAM_4);
+		LL_DMA_SetPeriphAddress(DMA1, LL_DMA_STREAM_4, (uint32_t)&(UART4->TDR));
+		gpsmag.tran_err_cnt ++;
+	    // 处理传输错误
+		LL_DMA_ClearFlag_TE4(DMA1);
+
+		gpsmag.TxFlag = false;
+		LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_4);
+	}
+
+//	if (LL_DMA_IsActiveFlag_FE4(DMA1) != RESET) {
 //		LL_DMA_DisableStream(DMA1,LL_DMA_STREAM_4);
-//		LL_DMA_SetPeriphAddress(DMA1, LL_DMA_STREAM_4, (uint32_t)UART4->TDR);
+//		LL_DMA_SetPeriphAddress(DMA1, LL_DMA_STREAM_4, (uint32_t)&(UART4->TDR));
+//		gpsmag.fifo_err_cnt ++;
+//	    // 处理FIFO错误
+//		LL_DMA_ClearFlag_FE4(DMA1);
+//
+//		gpsmag.TxFlag = false;
 //		LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_4);
-//		error_cnt = 0;
 //	}
 
-	if(gpsmag.TxFlag == true)
-	{
-//		error_cnt++;
-		return false;	//串口发送忙,放弃发送该帧数据
-	}
+	if(gpsmag.TxFlag == true) return false;	//串口发送忙,放弃发送该帧数据
 
 	LL_DMA_DisableStream(DMA1,LL_DMA_STREAM_4);
 	LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_4, Size);
 	LL_DMA_SetMemoryAddress(DMA1, LL_DMA_STREAM_4, (uint32_t)pData);
 	LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_4);
+
 	gpsmag.TxFlag = true;
 	return true;
 }
@@ -233,6 +248,7 @@ void GPSMAG::GpsMag_Init(void)
 	LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_4, GPS_TX_LEN);
 	LL_DMA_ClearFlag_TC4(DMA1);
 	LL_DMA_EnableIT_TC(DMA1, LL_DMA_STREAM_4);
+//	LL_DMA_EnableIT_FE(DMA1, LL_DMA_STREAM_4);
 	LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_4);
 	/* 配置发送DMA */
 

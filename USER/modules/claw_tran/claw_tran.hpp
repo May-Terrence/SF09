@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-#define CLAW_RX_LEN 30
+#define CLAW_RX_LEN 60
 #define CLAW_TX_LEN 30
 
 void USART6_IRQHandler(void);
@@ -68,8 +68,12 @@ private:
 	eSTA  Sta;			//状态  --
 	eERR  Err;			//错误信息  --
 
+	CLAW_msg claw_msg;
+
 };
 
 #endif
+
+extern CLAW claw;
 
 #endif /* MODULES_CLAW_TRAN_CLAW_TRAN_HPP_ */
