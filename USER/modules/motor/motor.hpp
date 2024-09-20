@@ -18,6 +18,7 @@
 
 #include "system/system.hpp"
 #include "userlib/userlib.hpp"
+#include "hardware.h"
 //#define motor_U6
 #define motor_U8
 
@@ -47,7 +48,7 @@ extern "C" {
 #define RUDDERVATOR_LIMIT_MAX 500
 
 
-
+#ifdef MF09II02
 #define CS_LIMIT_MIN -350
 #define CS_LIMIT_MAX 350    //175对应20度(0.349rad)
 
@@ -69,6 +70,30 @@ extern "C" {
 #define PWM_MID_7 1466
 #define PWM_MID_8 1250
 #define PWM_MID_9 1453
+#endif
+
+#ifdef MF09II01
+#define CS_LIMIT_MIN -340
+#define CS_LIMIT_MAX 340     //175对应20度(0.349rad)
+
+
+#define PWM_MID_0 1090
+
+
+#define PWM_MID_1 1517//1621//1573motor2
+#define PWM_MID_2 1500//1437//1581
+#define PWM_MID_3 1372//1420//1607motor4
+#define PWM_MID_4 1568//1615//1583
+
+
+#define PWM_MID_5 1540
+#define PWM_MID_6 1413
+
+
+#define PWM_MID_7 1466
+#define PWM_MID_8 1250
+#define PWM_MID_9 1453
+#endif
 
 
 

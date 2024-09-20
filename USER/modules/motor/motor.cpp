@@ -81,9 +81,17 @@ void MOTORMAG::motor_Init(void)
 	LL_USART_ClearFlag_IDLE(Motor_DMA_UART);
 	LL_USART_EnableIT_IDLE(Motor_DMA_UART);
 
-			MagOff[0] = -5603;
-			MagOff[1] = 210;
-			MagOff[2] = 13574;
+#ifdef MF09II02
+			MagOff[0] = -5078;
+			MagOff[1] = 29;
+			MagOff[2] = 12819;
+#endif
+#ifdef MF09II01
+			MagOff[0] = -2185.36;
+			MagOff[1] =  4350.75;
+			MagOff[2] =  9334.02;
+#endif
+
 
 	mag_update_time_us = 0;
 	mag.timestamp = mag_update_time_us;
