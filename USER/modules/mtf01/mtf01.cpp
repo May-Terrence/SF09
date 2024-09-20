@@ -127,7 +127,9 @@ void MTF01::micolink_decode(uint8_t data)
         default:
             break;
         }
-    laserFlow.height = static_cast<float>(payload.distance)/1000; //mm->m
+    laserFlow.height0 = -static_cast<float>(payload.distance)/1000; //mm->m
+    xQueuePeek(queueAhrsEuler,&ahrsEuler,0);
+    laserFlow.height = laserFlow.height0 * cosf(ahrsEuler.Ang[0]) * cosf(ahrsEuler.Ang[1]);
     SlideFilt(&laserFlow.heightFil, &laserFlow.height, 1, &heightFil, 1);
 
     laserFlow.VelxRaw = static_cast<float>(payload.flow_vel_x)/100; //cm/s->m/s
@@ -140,8 +142,6 @@ void MTF01::micolink_decode(uint8_t data)
     laserFlow.VelxFil = laserFlow.VelxRawFil* laserFlow.heightFil;
     laserFlow.VelyFil = laserFlow.VelyRawFil* laserFlow.heightFil;
 	xQueueOverwrite(queuelaserFlow,&laserFlow);
-
-
 }
 
 bool MTF01::micolink_check_sum(MICOLINK_MSG_t* msg)

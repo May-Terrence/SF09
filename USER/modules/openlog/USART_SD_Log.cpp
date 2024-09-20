@@ -1,6 +1,5 @@
 #include "USART_SD_Log.hpp"
 
-#ifdef SD
 openlog_classdef<16> openlog(uart_Send_DMA);
 
 static bool TxFlag=false;
@@ -17,15 +16,15 @@ void USART1_IRQHandler(void)
 		LL_DMA_ClearFlag_TC2(DMA2);
 		LL_DMA_ClearFlag_TE2(DMA2);
 		LL_DMA_ClearFlag_FE2(DMA2);
-//		slam.RxDataSize = TRAN_RX_LEN - LL_DMA_GetDataLength(DMA2, LL_DMA_STREAM_2);
+//		tran.RxDataSize = TRAN_RX_LEN - LL_DMA_GetDataLength(DMA2, LL_DMA_STREAM_2);
 //		do{//0xAA 0xAF [功能字] [字节数] [内容...] [校验和]
-//			if(slam.RxRawDat[0]!=0xAA || slam.RxRawDat[1]!=0xAF || slam.RxRawDat[3]!=slam.RxDataSize-5) break;
-//			if(slam.LockRx == HAL_LOCKED) break;
-//			slam.LockRx = HAL_LOCKED;
-//			memcpy(slam.RxDat, slam.RxRawDat, slam.RxDataSize);
-//			slam.RxDat[slam.RxDataSize] = 0;
-//			slam.LockRx = HAL_UNLOCKED;
-//			slam.RxFlag = true;   //收到完整一帧
+//			if(tran.RxRawDat[0]!=0xAA || tran.RxRawDat[1]!=0xAF || tran.RxRawDat[3]!=tran.RxDataSize-5) break;
+//			if(tran.LockRx == HAL_LOCKED) break;
+//			tran.LockRx = HAL_LOCKED;
+//			memcpy(tran.RxDat, tran.RxRawDat, tran.RxDataSize);
+//			tran.RxDat[tran.RxDataSize] = 0;
+//			tran.LockRx = HAL_UNLOCKED;
+//			tran.RxFlag = true;   //收到完整一帧
 //
 //			BaseType_t YieldRequired = xTaskResumeFromISR(tranReceiveTaskHandle);
 //			if(YieldRequired==pdTRUE)
@@ -79,11 +78,13 @@ void EskfDataStorage(void)
 	getTimer_us(&startTimer);
 	xQueuePeek(queueESKF,&EskfLog,0);
 	xQueuePeek(queueESKF_baro,&Eskf_baroLog,0);
-//	xQueuePeek(queueOrdinaryGps,&GpsLog,0);
+	xQueuePeek(queueGps,&GpsLog,0);
 	xQueuePeek(queueBaroAlt,&baroAlt,0);
 	xQueuePeek(queueMag, &mag, 0);
 	xQueuePeek(queueDownsampleIMU, &imu, 0);
 	xQueuePeek(queueRCCommand, &rcCommand, 0);
+	xQueuePeek(queueAccDat, &acc, 0);
+	xQueuePeek(queueGyrDat, &gyro, 0);
 	vs32 temp[60];
 	temp[0] = startTimer/100;
 	/*eskf data*/
@@ -121,12 +122,12 @@ void EskfDataStorage(void)
 
 	/*IMU data*/
 	temp[26] = imu.timestamp;
-	temp[27] = imu.acc[0]*1000;
-	temp[28] = imu.acc[1]*1000;
-	temp[29] = imu.acc[2]*1000;
-	temp[30] = imu.gyro[0]*1000;
-	temp[31] = imu.gyro[1]*1000;
-	temp[32] = imu.gyro[2]*1000;
+	temp[27] = acc.acc[0]*1000;
+	temp[28] = acc.acc[1]*1000;
+	temp[29] = acc.acc[2]*1000;
+	temp[30] = gyro.gyro[0]*1000;
+	temp[31] = gyro.gyro[1]*1000;
+	temp[32] = gyro.gyro[2]*1000;
 
 	/*mahany-q*/
 	temp[33] = 0;
@@ -268,259 +269,8 @@ extern "C" void tskLog(void *argument)
 //		vTaskSuspend(Log_Handle);
 		xQueuePeek(queueRCCommand, &rcCommand, 0);					//从队列中获取遥控器数据
 		if(rcCommand.Key[1]==2){
-			OutloopDataStorage();
+			EskfDataStorage();
 			openlog.Send();
 		}
 	}
 }
-#endif
-
-#ifdef SLAM
-SLAM_TRAN slam(USART1,(char*) "SLAM",(char*) "-X+Y+Z");	//slam坐标系南东地
-
-void USART1_IRQHandler(void)
-{
-	if(LL_USART_IsActiveFlag_IDLE(USART1))
-	{
-		LL_USART_ClearFlag_IDLE(USART1);
-		LL_DMA_DisableStream(DMA2,LL_DMA_STREAM_2);
-		LL_DMA_ClearFlag_DME2(DMA2);
-		LL_DMA_ClearFlag_HT2(DMA2);
-		LL_DMA_ClearFlag_TC2(DMA2);
-		LL_DMA_ClearFlag_TE2(DMA2);
-		LL_DMA_ClearFlag_FE2(DMA2);
-		slam.RxDataSize = SLAM_RX_LEN - LL_DMA_GetDataLength(DMA2, LL_DMA_STREAM_2);
-		do{//0xAA 0xAF [功能字] [字节数] [内容...] [校验和]
-			if(slam.RxRawDat[0]!=0xBB || slam.RxRawDat[1]!=0xAA || slam.RxRawDat[3]!=slam.RxDataSize-5) break;
-			if(slam.LockRx == HAL_LOCKED) break;
-			slam.LockRx = HAL_LOCKED;
-			memcpy(slam.RxDat, slam.RxRawDat, slam.RxDataSize);
-			slam.RxDat[slam.RxDataSize] = 0;
-			slam.LockRx = HAL_UNLOCKED;
-			slam.RxFlag = true;   //收到完整一帧
-
-			BaseType_t YieldRequired = xTaskResumeFromISR(tranReceiveTaskHandle);
-			if(YieldRequired==pdTRUE)
-			{
-				/*如果函数xTaskResumeFromISR()返回值为pdTRUE，那么说明要恢复的这个
-				任务的任务优先级等于或者高于正在运行的任务(被中断打断的任务),所以在
-				退出中断的时候一定要进行上下文切换！*/
-				portYIELD_FROM_ISR(YieldRequired);
-			}
-		}while(0);
-		LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_2, SLAM_RX_LEN);
-		LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_2);
-	}
-}
-
-void DMA2_Stream7_IRQHandler(void)  //发送DMA中断
-{
-	LL_DMA_DisableStream(DMA2,LL_DMA_STREAM_7);
-	LL_DMA_ClearFlag_TC7(DMA2);
-	slam.TxFlag = false;
-}
-
-bool uart_Send_DMA(uint8_t * pData,uint16_t Size)
-{
-	if(slam.TxFlag == true) return false;	//串口发送忙,放弃发送该帧数据
-	LL_DMA_DisableStream(DMA2,LL_DMA_STREAM_7);
-	LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_7, Size);
-	LL_DMA_SetMemoryAddress(DMA2, LL_DMA_STREAM_7, (uint32_t)pData);
-	LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_7);
-	slam.TxFlag = true;
-	return true;
-}
-
-void SLAM_TRAN::SLAM_Init(void)
-{
-	LockRx = HAL_UNLOCKED;
-	RxFlag = false;
-	TxFlag = false;
-	RxDataSize = 0;
-	executionTime_us = 0;
-	Sta = STA_INI;
-	Err = ERR_NONE;
-
-	if(Dir_Trans(Dir, DirChr)==false) Err = ERR_SOFT;
-
-//	for(uint8_t i=0;i<3;i++)
-//	{
-//		slam_msg.Pos[i] = 0;
-//		slam_msg.Pos_command[i] = 0;
-//	}
-//	xQueueOverwrite(queueSlam,&slam_msg);
-	osDelay(250);
-
-	/* 配置接收DMA */
-	LL_DMA_DisableStream(DMA2,LL_DMA_STREAM_2);
-	LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_2, (uint32_t)&huart->RDR);
-	LL_DMA_SetMemoryAddress(DMA2, LL_DMA_STREAM_2, (uint32_t)RxRawDat);
-	LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_2, SLAM_RX_LEN);
-	LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_2);
-	/* 配置接收DMA */
-
-	/* 配置发送DMA */
-	LL_DMA_DisableStream(DMA2,LL_DMA_STREAM_7);
-	LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_7, (uint32_t)&huart->TDR);
-	LL_DMA_SetMemoryAddress(DMA2, LL_DMA_STREAM_7, (uint32_t)TxDat);
-	LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_7, SLAM_TX_LEN);
-	LL_DMA_ClearFlag_TC7(DMA2);
-	LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_7);
-	LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_7);
-	/* 配置发送DMA */
-
-	LL_DMA_ClearFlag_DME2(DMA2);
-	LL_DMA_ClearFlag_HT2(DMA2);
-	LL_DMA_ClearFlag_TC2(DMA2);
-	LL_DMA_ClearFlag_TE2(DMA2);
-	LL_DMA_ClearFlag_FE2(DMA2);
-
-	LL_USART_ClearFlag_CM(huart);
-	LL_USART_ClearFlag_EOB(huart);
-	LL_USART_ClearFlag_FE(huart);
-	LL_USART_ClearFlag_LBD(huart);
-	LL_USART_ClearFlag_NE(huart);
-	LL_USART_ClearFlag_ORE(huart);
-	LL_USART_ClearFlag_PE(huart);
-	LL_USART_ClearFlag_RTO(huart);
-	LL_USART_ClearFlag_TC(huart);
-	LL_USART_ClearFlag_WKUP(huart);
-	LL_USART_ClearFlag_nCTS(huart);
-	LL_USART_ClearFlag_IDLE(huart);
-
-	LL_USART_EnableDMAReq_RX(huart);
-	LL_USART_EnableDMAReq_TX(huart);
-	LL_USART_ClearFlag_IDLE(huart);
-	LL_USART_EnableIT_IDLE(huart);
-	Sta = STA_RUN;
-
-	osDelay(250);
-}
-
-void SLAM_TRAN::Command_Receive(void)
-{
-	if(slam.RxRawDat[2] == 0x00)
-	{
-		if(slam.RxRawDat[4] == 0x01)
-			slam.isCommunicating = true;
-	}
-	else if(slam.RxRawDat[2] == 0x01)
-	{
-		switch(slam.RxRawDat[4])
-		{
-		case 0x01:
-			Ready_Take_off = true;
-			break;
-		case 0x02:
-			Ready_Take_off = false;
-			break;
-		case 0x03:
-			Ready_Land = true;
-			break;
-		case 0x04:
-			Ready_Land = false;
-			break;
-		}
-	}
-
-	uart_Send_Check();
-}
-
-void SLAM_TRAN::Relative_Position_Transfer(void)
-{
-	xQueuePeek(queueGps,&gps,0);
-	xQueuePeek(queueESKF,&eskf,0);
-	xQueuePeek(queueControlTransfer,&control_data,0);
-
-	float temp;
-	slam.TxDat[0] = 0xBB;
-	slam.TxDat[1] = 0xAA;
-	slam.TxDat[2] = 0x02;
-	slam.TxDat[3] = 8;
-
-	temp = gps.lng;				//user_data1	经度
-	slam.TxDat[4] = BYTE3(temp);
-	slam.TxDat[5] = BYTE2(temp);
-	slam.TxDat[6] = BYTE1(temp);
-	slam.TxDat[7] = BYTE0(temp);
-
-	temp = gps.lat;				//user_data2	纬度
-	slam.TxDat[8] = BYTE3(temp);
-	slam.TxDat[9] = BYTE2(temp);
-	slam.TxDat[10] = BYTE1(temp);
-	slam.TxDat[11] = BYTE0(temp);
-
-	uint8_t sum = 0;
-	for(uint8_t i=0; i<12; i++) sum += TxDat[i];
-	TxDat[12] = sum;
-	uart_Send_DMA((u8 *)slam.TxDat, 13);
-}
-
-void SLAM_TRAN::Status_Transfer(void)
-{
-	slam.TxDat[0] = 0xBB;
-	slam.TxDat[1] = 0xAA;
-	slam.TxDat[2] = 0x01;
-	slam.TxDat[3] = 1;
-	slam.TxDat[4] = slam.status;
-
-	uint8_t sum = 0;
-	for(uint8_t i=0; i<5; i++) sum += TxDat[i];
-	TxDat[5] = sum;
-	uart_Send_DMA((u8 *)slam.TxDat, 6);
-}
-
-void SLAM_TRAN::Take_off_Request_Transfer(void)
-{
-	slam.TxDat[0] = 0xBB;
-	slam.TxDat[1] = 0xAA;
-	slam.TxDat[2] = 0x00;
-	slam.TxDat[3] = 1;
-	slam.TxDat[4] = 0x01;
-
-	uint8_t sum = 0;
-	for(uint8_t i=0; i<5; i++) sum += TxDat[i];
-	TxDat[5] = sum;
-	uart_Send_DMA((u8 *)slam.TxDat, 6);
-}
-
-void SLAM_TRAN::Land_Request_Transfer(void)
-{
-	slam.TxDat[0] = 0xBB;
-	slam.TxDat[1] = 0xAA;
-	slam.TxDat[2] = 0x00;
-	slam.TxDat[3] = 1;
-	slam.TxDat[4] = 0x02;
-
-	uint8_t sum = 0;
-	for(uint8_t i=0; i<5; i++) sum += TxDat[i];
-	TxDat[5] = sum;
-	uart_Send_DMA((u8 *)slam.TxDat, 6);
-}
-
-bool SLAM_TRAN::uart_Send_Check(void)
-{
-	slam.TxDat[0] = 0xBB;
-	slam.TxDat[1] = 0xAA;
-	TxDat[2] = 0x03;
-	TxDat[3] = 1;
-	TxDat[4] = 0x01;
-
-	uint8_t sum = 0;
-	for(uint8_t i=0; i<5; i++) sum += TxDat[i];
-	TxDat[5] = sum;
-	return uart_Send_DMA((u8 *)TxDat, 6);
-}
-
-extern "C" void slam_main(void *argument)
-{
-	osDelay(500);//等待系统完成初始化
-	slam.SLAM_Init();	//参数初始化
-	for(;;)
-	{
-		vTaskSuspend(slamTaskHandle);
-		slam.Command_Receive();
-	}
-}
-
-#endif

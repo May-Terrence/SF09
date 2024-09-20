@@ -204,6 +204,7 @@ typedef struct
 	float Vely;			//y轴光流速度，单位cm/s
 	float Posx;			//x轴光流位置，单位cm
 	float Posy;			//y轴光流位置，单位cm
+	float height0;
 	float height;
 	float heightFil;
 	float VelxFil;
@@ -267,9 +268,6 @@ typedef struct
 	float dAng;       //角速度
 	float Thr;        //遥控器油门
 	float Uvw[3];     //遥控器Uvw
-
-	int IsAir{0}; 	  //0为地面，1为空中
-	bool ReLanding{false}; //二次下降
 
 }RC_command_msg;
 /* 遥控器数据 */

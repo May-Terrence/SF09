@@ -94,6 +94,7 @@ private:
 	MICOLINK_MSG_t msg;
 	MICOLINK_PAYLOAD_RANGE_SENSOR_t payload;
 	laserFlow_msg laserFlow;
+	ahrs_euler_msg ahrsEuler;
 	sCNT heightFil;
 	sCNT VelxFil;
 	sCNT VelyFil;

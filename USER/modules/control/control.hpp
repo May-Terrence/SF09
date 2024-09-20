@@ -37,7 +37,7 @@ using namespace Eigen;
 #include "fly_point.h"
 #include <path_follow/pathFollow.hpp>
 
-
+#define dt 0.01
 #define CTRLFB_NUM 1
 #define CTRLIO_NUM 1
 #define CTRLIL_NUM 1
@@ -186,7 +186,8 @@ typedef struct
 
 	int   XYZ_phase;
 	float POS_thr;
-	float X_pos0,Y_pos0,Z_pos0;
+	float X_pos0,Y_pos0,Z_pos0,Z_laser_pos0;
+	float Yaw0;
 
 	int count;
 	int count1;
@@ -349,11 +350,9 @@ public:
 	PID *pidRol=&pid[3],*pidPit=&pid[4],*pidYaw=&pid[5];
 	PID *pidXRate=&pid[6],*pidYRate=&pid[7],*pidZRate=&pid[8];
 	PID *pidX=&pid[9],*pidY=&pid[10],*pidZ=&pid[11];
-	PID *pidAltitudePitchHold = &pid[12];
+	PID *pidLaser=&pid[12];
 	PID *pidThrust=&pid[13];
-
-	PID *pidCourseRollHold = &pid[14];
-	PID *pidAltitudeVelHold = &pid[15];
+	PID *pidTmp=&pid[15];
 
 	PID_msg pid_msg;
 
@@ -367,6 +366,7 @@ public:
 
 	RC_command_msg rcCommand;
 	fly_point fly_point_overwrite;
+	laserFlow_msg laserFlow;
 
 	FlyPoint point_list[10];
 	Data_3D<float> position;
@@ -410,7 +410,10 @@ private:
 	uint16_t circleRemaining{0}; //圆弧运动时，将画多少个整圆，不足一个不算
 	uint16_t circleTraveled{0}; //圆弧运动时，已经画过多少个整圆
 
-
+	float Z_laser_err{0};
+	float Z_err_inter{0};
+	float Z_err_cor{0};
+	float last_laser_height{0};
 };
 
 

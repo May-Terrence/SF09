@@ -13,6 +13,7 @@
 #include "userlib/userlib.hpp"
 #include "control/control.hpp"
 #include "trajectory/trajectory.hpp"
+#include "hardware.h"
 
 
 #ifdef __cplusplus

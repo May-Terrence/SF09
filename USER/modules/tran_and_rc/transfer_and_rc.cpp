@@ -1748,7 +1748,7 @@ bool TRAN::uart_Send_User(void)//航点
 
 	vs16 temp;
 	tran.TxDat[2] = 0xF1;
-	tran.TxDat[3] = 48;
+	tran.TxDat[3] = 54;
 
 	temp = control_data.X_command[0]*100;					//user_data1	X位置期望
 	tran.TxDat[4] = BYTE1(temp);
@@ -1807,53 +1807,65 @@ bool TRAN::uart_Send_User(void)//航点
 //	tran.TxDat[30] = BYTE1(temp);
 //	tran.TxDat[31] = BYTE0(temp);
 
-	temp = control_data.yaw_command[0]*R2D*100;				//user_data13	偏航角期望值
+	temp = control_data.yaw_command[0]*R2D*100;			//user_data13	偏航角期望值
 	tran.TxDat[28] = BYTE1(temp);
 	tran.TxDat[29] = BYTE0(temp);
 
-	temp = control_data.Ang[2]*R2D*100;						//user_data14	偏航角反馈值
+	temp = control_data.Ang[2]*R2D*100;					//user_data14	偏航角反馈值
 	tran.TxDat[30] = BYTE1(temp);
 	tran.TxDat[31] = BYTE0(temp);
 
-	temp = control_data.FlightStatus*100;
+	temp = control_data.FlightStatus*100;				//user_data15	飞行状态
 	tran.TxDat[32] = BYTE1(temp);
 	tran.TxDat[33] = BYTE0(temp);
 
-	temp = control_data.Pos_estimate[0]*100;
+	temp = control_data.Pos_estimate[0]*100;			//user_data16	X位置估计
 	tran.TxDat[34] = BYTE1(temp);
 	tran.TxDat[35] = BYTE0(temp);
 
-	temp = control_data.Pos_estimate[1]*100;
+	temp = control_data.Pos_estimate[1]*100;			//user_data17	Y位置估计
 	tran.TxDat[36] = BYTE1(temp);
 	tran.TxDat[37] = BYTE0(temp);
 
-	temp = control_data.enable_Grab_flag*100;
+	temp = control_data.enable_Grab_flag*100;			//user_data18	抓取标志
 	tran.TxDat[38] = BYTE1(temp);
 	tran.TxDat[39] = BYTE0(temp);
 
-	temp = control_data.X_err_estimate*100;
+	temp = control_data.X_err_estimate*100;				//user_data19	X位置估计误差
 	tran.TxDat[40] = BYTE1(temp);
 	tran.TxDat[41] = BYTE0(temp);
 
-	temp = control_data.Y_err_estimate*100;
+	temp = control_data.Y_err_estimate*100;				//user_data20	Y位置估计误差
 	tran.TxDat[42] = BYTE1(temp);
 	tran.TxDat[43] = BYTE0(temp);
 
-	temp = control_data.XY_err_estimate*100;
+	temp = control_data.XY_err_estimate*100;			//user_data21	水平位置估计误差
 	tran.TxDat[44] = BYTE1(temp);
 	tran.TxDat[45] = BYTE0(temp);
 
-	temp = laserFlow.VelxFil*100;
+	temp = laserFlow.height0*100;						//user_data22	激光原始值
 	tran.TxDat[46] = BYTE1(temp);
 	tran.TxDat[47] = BYTE0(temp);
 
-	temp = laserFlow.VelxFil*100;
+	temp = laserFlow.height*100;						//user_data23	激光原始值
 	tran.TxDat[48] = BYTE1(temp);
 	tran.TxDat[49] = BYTE0(temp);
 
-	temp = laserFlow.heightFil*100;
+	temp = laserFlow.heightFil*100;						//user_data24	激光修正滤波值
 	tran.TxDat[50] = BYTE1(temp);
 	tran.TxDat[51] = BYTE0(temp);
+
+	temp = gps.NED[0]*100;							//user_data4	X位置反馈值
+	tran.TxDat[52] = BYTE1(temp);
+	tran.TxDat[53] = BYTE0(temp);
+
+	temp = gps.NED[1]*100;							//user_data5	Y位置反馈值
+	tran.TxDat[54] = BYTE1(temp);
+	tran.TxDat[55] = BYTE0(temp);
+
+	temp = gps.NED[2]*100;							//user_data6	Z位置反馈值
+	tran.TxDat[56] = BYTE1(temp);
+	tran.TxDat[57] = BYTE0(temp);
 //
 //	temp = control_output_msg.mt_output[0];					//user_data15	电机1PWM
 //	tran.TxDat[32] = BYTE1(temp);
@@ -1905,9 +1917,9 @@ bool TRAN::uart_Send_User(void)//航点
 
 
 	uint8_t sum = 0;
-	for(uint8_t i=0; i<52; i++) sum += TxDat[i];
-	TxDat[52] = sum;
-	return uart_Send_DMA((u8 *)TxDat, 53);
+	for(uint8_t i=0; i<58; i++) sum += TxDat[i];
+	TxDat[58] = sum;
+	return uart_Send_DMA((u8 *)TxDat, 59);
 }
 #endif
 
@@ -1971,10 +1983,6 @@ void TRAN::uart_Receive_Update(void)
 						xQueuePeek(queueRCCommand, &rcCommand, 0);
 
 						rcCommand.OneKeyLanding = true;
-
-						if(rcCommand.IsAir == 1){
-							rcCommand.ReLanding = true;
-						}
 
 						xQueueOverwrite(queueRCCommand,&rcCommand);
 

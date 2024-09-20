@@ -43,6 +43,8 @@ public:
 	bool uart_Send_DMA(uint8_t * pData,uint16_t Size);
 	void Open_Request_Tran(void);
 	void Close_Request_Tran(void);
+	void Start_Request_Tran(void);
+	void End_Request_Tran(void);
 
 	HAL_LockTypeDef LockRx;
 	bool  TxFlag;		//标志位
@@ -54,6 +56,7 @@ public:
 
 	bool isOpen{false};
 	bool isClose{true};
+	bool isConnect{false};
 	bool isUpdate{false};
 	CLAW_msg claw_msg;
 
@@ -77,6 +80,18 @@ private:
 };
 
 #endif
+
+#pragma pack(1)
+typedef struct
+{
+	float position_N;
+	float position_E;
+	float position_D;
+	float yaw;
+
+	uint8_t satellites_used;
+	uint8_t work_mode;
+}claw_msg_update;
 
 extern CLAW claw;
 

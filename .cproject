@@ -108,7 +108,7 @@
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Core"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Middlewares"/>
-						<entry excluding="modules/alloc/wls_alloc.cpp|modules/gps_ins_EKF|modules/transfer|modules/transfer/transfer.cpp|modules/OrdinaryGps|modules/ms5611|modules/eskf/mahanyCPF3Mag.cpp|modules/rm3100|modules/eskf/utility.cpp|modules/ahrs/ahrs_old.cpp|modules/ahrs/ahrs3Am.cpp|modules/eskf/eskf_discard.cpp|modules/flow" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="USER"/>
+						<entry excluding="modules/slam|modules/eskf/eskf_discard.cpp|modules/gps_ins_EKF|modules/transfer/transfer.cpp|modules/rm3100|modules/alloc/wls_alloc.cpp|modules/transfer|modules/eskf/mahanyCPF3Mag.cpp|modules/ahrs/ahrs3Am.cpp|modules/flow|modules/ahrs/ahrs_old.cpp|modules/OrdinaryGps|modules/ms5611|modules/eskf/utility.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="USER"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="eigen3/Eigen"/>
 					</sourceEntries>
 				</configuration>
@@ -220,7 +220,7 @@
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="Core"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Middlewares"/>
-						<entry excluding="modules/alloc/wls_alloc.cpp|modules/gps_ins_EKF|modules/transfer|modules/transfer/transfer.cpp|modules/OrdinaryGps|modules/ms5611|modules/eskf/mahanyCPF3Mag.cpp|modules/rm3100|modules/eskf/utility.cpp|modules/ahrs/ahrs_old.cpp|modules/ahrs/ahrs3Am.cpp|modules/eskf/eskf_discard.cpp|modules/flow" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="USER"/>
+						<entry excluding="modules/slam|modules/eskf/eskf_discard.cpp|modules/gps_ins_EKF|modules/transfer/transfer.cpp|modules/rm3100|modules/alloc/wls_alloc.cpp|modules/transfer|modules/eskf/mahanyCPF3Mag.cpp|modules/ahrs/ahrs3Am.cpp|modules/flow|modules/ahrs/ahrs_old.cpp|modules/OrdinaryGps|modules/ms5611|modules/eskf/utility.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="USER"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="eigen3/Eigen"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="matrix"/>
 					</sourceEntries>

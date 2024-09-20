@@ -4,11 +4,11 @@
  *  Created on: 2020年9月2日
  *      Author: 17900
  */
+#include <slam/slam.hpp>
 #include "control_step.hpp"
 #include <tran_and_rc/transfer_and_rc.hpp>
 #include "path_follow/pathFollow.hpp"
 #include "claw_tran/claw_tran.hpp"
-#include "openlog/USART_SD_Log.hpp"
 
 CONTROL_STEP control_step;
 
@@ -112,15 +112,22 @@ void CONTROL_STEP::Control_Step()
 				if(rcCommand.Key[3] == 0 )
 				{
 					CtrlIO.control_mode = 2;//自控模式
+					if(claw.isOpen) claw.Close_Request_Tran();
 				}
 				else if (rcCommand.Key[3] == 2 )
 				{
 					CtrlIO.control_mode = 3;		//轨迹模式
-					if(CtrlIO.last_control_mode != 3)
-					{
+					claw.Start_Request_Tran();
+
+					if(claw.isConnect){
+						claw.isConnect = false;
+						xQueuePeek(queuelaserFlow,&laserFlow,0);
 						CtrlLpIO.X_pos0 = CtrlFbck.X[0];//仅第一次记录xy当前位置
 						CtrlLpIO.Y_pos0 = CtrlFbck.Y[0];
-//						CtrlLpIO.Z_pos0 = CtrlFbck.Z[0];
+						CtrlLpIO.Z_pos0 = CtrlFbck.Z[0];
+						CtrlLpIO.Yaw0   = CtrlFbck.Ang[2];
+						CtrlLpIO.Z_laser_pos0 = laserFlow.heightFil;
+						if(claw.isClose) claw.Open_Request_Tran();
 					}
 	// 				if(CtrlIO.last_control_mode != 3) 
 	// 				{
@@ -250,9 +257,8 @@ void CONTROL_STEP::Control_Step()
 //			}
 			if(CtrlIO.last_control_mode == 3) {
 				CtrlIO.FlightStatus = GROUND;
+				rcCommand.OneKeyTakeoff = false;
 				rcCommand.OneKeyLanding = false;
-				rcCommand.IsAir = 0;
-				rcCommand.ReLanding = false;
 			}
 
 			Out_Loop_XY_Pre2();           //水平速度给定，判断定点模式
@@ -286,10 +292,10 @@ void CONTROL_STEP::Control_Step()
 //
 //					  CtrlLpIO.end_command[0] = CtrlLpIO.X_pos0 + claw_msg.Pos[0];
 //					  CtrlLpIO.end_command[0] = CtrlLpIO.Y_pos0 + claw_msg.Pos[1];
-//			  	  	  CtrlLpIO.end_yaw = claw_msg.Yaw;
+//			  	  	  //CtrlLpIO.end_yaw = claw_msg.Yaw;
 //			  	  	  isReady = true;
 //			  	  }
-//			  	  if(isReady) OneKeyLanding(X_command,Y_command,true,true);
+//			  	  if(isReady) OneKeyLanding(CtrlLpIO.end_command[0],CtrlLpIO.end_command[1],true,true);
 //			  }
 
 //			  trackPath();
@@ -519,8 +525,30 @@ extern "C" void control_main(void *argument)
 		control_step.Control_Step2();
 		if(cnt%200)
 			control_step.PID_Para_Update();
-		if(cnt%4)
+		if(cnt%4){
 			control_step.Tranfer_Data_Updata();
+//			switch(slam.test_flag)
+//			{
+//			case 0:
+//				break;
+//			case 1:
+//				slam.Relative_Position_Transfer();
+//				slam.test_flag = 0;
+//				break;
+//			case 2:
+//				slam.Status_Transfer();
+//				slam.test_flag = 0;
+//				break;
+//			case 3:
+//				slam.Take_off_Request_Transfer();
+//				slam.test_flag = 0;
+//				break;
+//			case 4:
+//				slam.Land_Request_Transfer();
+//				slam.test_flag = 0;
+//				break;
+//			}
+		}
 		cnt++;
 
 		getTimer_us(&control_step.stopTimer);

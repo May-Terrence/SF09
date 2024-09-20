@@ -39,7 +39,7 @@ void USART6_IRQHandler(void)
 		claw.RxDataSize = CLAW_RX_LEN - LL_DMA_GetDataLength(DMA2, LL_DMA_STREAM_1);
 
 		do{
-			if(claw.RxRawDat[0] != 0xCC || claw.RxRawDat[1] != 0xCC || claw.RxRawDat[2] != claw.RxDataSize-5) break;
+			if(claw.RxRawDat[0] != 0xCC || claw.RxRawDat[1] != 0xCC || claw.RxRawDat[3] != claw.RxDataSize-5) break;
 			if(claw.LockRx == HAL_LOCKED)break;
 			claw.LockRx = HAL_LOCKED;
 			memcpy(claw.RxDat,claw.RxRawDat,claw.RxDataSize);
@@ -137,21 +137,27 @@ bool CLAW::uart_Send_DMA(uint8_t * pData,uint16_t Size)	//DMA发送
 
 void CLAW::claw_Update(void)
 {
-	if(RxDat[2] == 0x01){
-		for(int i=1; i<4; i++)
-		{
-			claw_msg.Pos[i-1] = ((RxDat[i*4+3]<<24)|(RxDat[i*4+2]<<16)|(RxDat[i*4+1]<<8)|(RxDat[i*4]));
-		}
-
-		claw_msg.Yaw = ((RxDat[19]<<24)|(RxDat[18]<<16)|(RxDat[17]<<8)|(RxDat[16]));
-		claw_msg.star = RxDat[20];
-		claw_msg.model = RxDat[21];
+	if(RxDat[2] == 0x00){
+//		for(int i=1; i<4; i++)
+//		{
+//			claw_msg.Pos[i-1] = ((RxDat[i*4+3]<<24)|(RxDat[i*4+2]<<16)|(RxDat[i*4+1]<<8)|(RxDat[i*4]));
+//		}
+//
+//		claw_msg.Yaw = ((RxDat[19]<<24)|(RxDat[18]<<16)|(RxDat[17]<<8)|(RxDat[16]));
+//		claw_msg.star = RxDat[20];
+//		claw_msg.model = RxDat[21];
+		claw_msg.Pos[0] = ((claw_msg_update *)(&RxDat[4]))->position_N;
+		claw_msg.Pos[1] = ((claw_msg_update *)(&RxDat[4]))->position_E;
+		claw_msg.Pos[2] = ((claw_msg_update *)(&RxDat[4]))->position_D;
+		claw_msg.Yaw    = ((claw_msg_update *)(&RxDat[4]))->yaw;
+		claw_msg.star   = ((claw_msg_update *)(&RxDat[4]))->satellites_used;
+		claw_msg.model  = ((claw_msg_update *)(&RxDat[4]))->work_mode;
 
 		isUpdate = true;
 		xQueueOverwrite(queueClaw, &claw_msg);
 	}
-	else if(RxDat[2] == 0x00){
-		switch(RxDat[4] == 0x00)
+	else if(RxDat[2] == 0x01){
+		switch(RxDat[4])
 		{
 		case 0x00:
 			isOpen = true;
@@ -160,6 +166,9 @@ void CLAW::claw_Update(void)
 		case 0x01:
 			isClose = true;
 			isOpen = false;
+			break;
+		case 0x02:
+			isConnect = true;
 			break;
 		}
 	}
@@ -183,6 +192,32 @@ void CLAW::Close_Request_Tran(void)
 	claw.TxDat[0] = 0xCC;
 	claw.TxDat[1] = 0xCC;
 	claw.TxDat[2] = 0x01;
+	claw.TxDat[3] = 1;
+	claw.TxDat[4] = 0x01;
+	u8 sum = 0;
+	for(u8 i=0;i<5;i++)sum += claw.TxDat[i];
+		claw.TxDat[5] = sum;
+	claw.uart_Send_DMA((u8 *)claw.TxDat, 6);
+}
+
+void CLAW::Start_Request_Tran(void)
+{
+	claw.TxDat[0] = 0xCC;
+	claw.TxDat[1] = 0xCC;
+	claw.TxDat[2] = 0x00;
+	claw.TxDat[3] = 1;
+	claw.TxDat[4] = 0x00;
+	u8 sum = 0;
+	for(u8 i=0;i<5;i++)sum += claw.TxDat[i];
+		claw.TxDat[5] = sum;
+	claw.uart_Send_DMA((u8 *)claw.TxDat, 6);
+}
+
+void CLAW::End_Request_Tran(void)
+{
+	claw.TxDat[0] = 0xCC;
+	claw.TxDat[1] = 0xCC;
+	claw.TxDat[2] = 0x00;
 	claw.TxDat[3] = 1;
 	claw.TxDat[4] = 0x01;
 	u8 sum = 0;
