@@ -149,6 +149,7 @@ void modPI(float *theta);
 
 
 float SQR(float x);
+double SQRD(double x);
 float absf(float x);
 float MAX(float x,float y);
 float MIN(float x,float y);

@@ -1748,7 +1748,7 @@ bool TRAN::uart_Send_User(void)//航点
 
 	vs16 temp;
 	tran.TxDat[2] = 0xF1;
-	tran.TxDat[3] = 54;
+	tran.TxDat[3] = 56;
 
 	temp = control_data.X_command[0]*100;					//user_data1	X位置期望
 	tran.TxDat[4] = BYTE1(temp);
@@ -1773,7 +1773,6 @@ bool TRAN::uart_Send_User(void)//航点
 	temp = eskf.Pos[2]*100;							//user_data6	Z位置反馈值
 	tran.TxDat[14] = BYTE1(temp);
 	tran.TxDat[15] = BYTE0(temp);
-
 
 	temp = control_data.X_command[1]*100;					//user_data7	X速度期望值
 	tran.TxDat[16] = BYTE1(temp);
@@ -1819,54 +1818,70 @@ bool TRAN::uart_Send_User(void)//航点
 	tran.TxDat[32] = BYTE1(temp);
 	tran.TxDat[33] = BYTE0(temp);
 
-	temp = control_data.Pos_estimate[0]*100;			//user_data16	X位置估计
+	temp = control_data.Z_diff_gps*100;					//user_data19	X位置估计误差
 	tran.TxDat[34] = BYTE1(temp);
 	tran.TxDat[35] = BYTE0(temp);
 
-	temp = control_data.Pos_estimate[1]*100;			//user_data17	Y位置估计
+	temp = control_data.Z_diff_laser*100;				//user_data20	Y位置估计误差
 	tran.TxDat[36] = BYTE1(temp);
 	tran.TxDat[37] = BYTE0(temp);
 
-	temp = control_data.enable_Grab_flag*100;			//user_data18	抓取标志
+	temp = control_data.Z_diff*100;						//user_data21	水平位置估计误差
 	tran.TxDat[38] = BYTE1(temp);
 	tran.TxDat[39] = BYTE0(temp);
 
-	temp = control_data.X_err_estimate*100;				//user_data19	X位置估计误差
+//	temp = laserFlow.height0*100;						//user_data22	激光原始值
+//	tran.TxDat[46] = BYTE1(temp);
+//	tran.TxDat[47] = BYTE0(temp);
+//
+//	temp = laserFlow.height*100;						//user_data23	激光原始值
+//	tran.TxDat[48] = BYTE1(temp);
+//	tran.TxDat[49] = BYTE0(temp);
+//
+//	temp = laserFlow.heightFil*100;						//user_data24	激光修正滤波值
+//	tran.TxDat[50] = BYTE1(temp);
+//	tran.TxDat[51] = BYTE0(temp);
+
+	temp = gps.NED[0]*100;							//user_data4	X位置反馈值
 	tran.TxDat[40] = BYTE1(temp);
 	tran.TxDat[41] = BYTE0(temp);
 
-	temp = control_data.Y_err_estimate*100;				//user_data20	Y位置估计误差
+	temp = gps.NED[1]*100;							//user_data5	Y位置反馈值
 	tran.TxDat[42] = BYTE1(temp);
 	tran.TxDat[43] = BYTE0(temp);
 
-	temp = control_data.XY_err_estimate*100;			//user_data21	水平位置估计误差
+	temp = gps.NED[2]*100;							//user_data6	Z位置反馈值
 	tran.TxDat[44] = BYTE1(temp);
 	tran.TxDat[45] = BYTE0(temp);
 
-	temp = laserFlow.height0*100;						//user_data22	激光原始值
+	temp = gps.NED_spd[0]*100;							//user_data4	X位置反馈值
 	tran.TxDat[46] = BYTE1(temp);
 	tran.TxDat[47] = BYTE0(temp);
 
-	temp = laserFlow.height*100;						//user_data23	激光原始值
+	temp = gps.NED_spd[1]*100;							//user_data5	Y位置反馈值
 	tran.TxDat[48] = BYTE1(temp);
 	tran.TxDat[49] = BYTE0(temp);
 
-	temp = laserFlow.heightFil*100;						//user_data24	激光修正滤波值
+	temp = gps.NED_spd[2]*100;							//user_data6	Z位置反馈值
 	tran.TxDat[50] = BYTE1(temp);
 	tran.TxDat[51] = BYTE0(temp);
 
-	temp = gps.NED[0]*100;							//user_data4	X位置反馈值
+	temp = control_data.X_err_estimate*100;			//user_data16	X位置估计
 	tran.TxDat[52] = BYTE1(temp);
 	tran.TxDat[53] = BYTE0(temp);
 
-	temp = gps.NED[1]*100;							//user_data5	Y位置反馈值
+	temp = control_data.Y_err_estimate*100;			//user_data17	Y位置估计
 	tran.TxDat[54] = BYTE1(temp);
 	tran.TxDat[55] = BYTE0(temp);
 
-	temp = gps.NED[2]*100;							//user_data6	Z位置反馈值
+	temp = control_data.XY_err_estimate*100;			//user_data17	Y位置估计
 	tran.TxDat[56] = BYTE1(temp);
 	tran.TxDat[57] = BYTE0(temp);
-//
+
+	temp = control_data.enable_Grab_flag*100;			//user_data18	抓取标志
+	tran.TxDat[58] = BYTE1(temp);
+	tran.TxDat[59] = BYTE0(temp);
+
 //	temp = control_output_msg.mt_output[0];					//user_data15	电机1PWM
 //	tran.TxDat[32] = BYTE1(temp);
 //	tran.TxDat[33] = BYTE0(temp);
@@ -1917,9 +1932,119 @@ bool TRAN::uart_Send_User(void)//航点
 
 
 	uint8_t sum = 0;
-	for(uint8_t i=0; i<58; i++) sum += TxDat[i];
-	TxDat[58] = sum;
-	return uart_Send_DMA((u8 *)TxDat, 59);
+	for(uint8_t i=0; i<60; i++) sum += TxDat[i];
+	TxDat[60] = sum;
+	return uart_Send_DMA((u8 *)TxDat, 61);
+}
+#endif
+
+#ifdef eskf_test
+bool TRAN::uart_Send_User(void)//航点
+{
+
+	if(tran.TxFlag == true) return false;
+	xQueuePeek(queueControlTransfer,&control_data,0);
+//	xQueuePeek(queueControlOutputDat,&control_output_msg,0);
+	xQueuePeek(queueGps,&gps,0);
+	xQueuePeek(queueESKF,&eskf,0);
+	xQueuePeek(queueTargetBuffer,&target_buffer,0);
+	xQueuePeek(queueAccDatFil,&acc_filter,0);
+	xQueuePeek(queuelaserFlow,&laserFlow,0);
+	xQueuePeek(queueDownsampleIMU, &imu, 0);
+
+	vs16 temp;
+	Vector3f temp1;
+	tran.TxDat[2] = 0xF1;
+	tran.TxDat[3] = 42;
+
+	temp = gps.NED[0]*100;					//user_data1	X位置期望
+	tran.TxDat[4] = BYTE1(temp);
+	tran.TxDat[5] = BYTE0(temp);
+
+	temp = gps.NED[2]*100;					//user_data1	X位置期望
+	tran.TxDat[6] = BYTE1(temp);
+	tran.TxDat[7] = BYTE0(temp);
+
+	temp = sqrt(SQR(gps.NED_spd[0])+SQR(gps.NED_spd[1])+SQR(gps.NED_spd[2]))*100;
+	tran.TxDat[8] = BYTE1(temp);
+	tran.TxDat[9] = BYTE0(temp);
+
+	temp = eskf.Pos[0]*100;					//user_data1	X位置期望
+	tran.TxDat[10] = BYTE1(temp);
+	tran.TxDat[11] = BYTE0(temp);
+
+	temp = eskf.Pos[2]*100;					//user_data3	Z位置期望
+	tran.TxDat[12] = BYTE1(temp);
+	tran.TxDat[13] = BYTE0(temp);
+
+	temp = sqrt(SQR(eskf.Ned_spd[0])+SQR(eskf.Ned_spd[1])+SQR(eskf.Ned_spd[2]))*100;
+	tran.TxDat[14] = BYTE1(temp);
+	tran.TxDat[15] = BYTE0(temp);
+
+	temp = eskf.Attitude[0]*R2D*100;
+	tran.TxDat[16] = BYTE1(temp);
+	tran.TxDat[17] = BYTE0(temp);
+
+	temp = eskf.Attitude[1]*R2D*100;
+	tran.TxDat[18] = BYTE1(temp);
+	tran.TxDat[19] = BYTE0(temp);
+
+	temp = eskf.Attitude[2]*R2D*100;						//user_data9	Z速度期望值
+	tran.TxDat[20] = BYTE1(temp);
+	tran.TxDat[21] = BYTE0(temp);
+
+	temp = eskf.Acc_bias[0]*10000;								//user_data1	X位置期望
+	tran.TxDat[22] = BYTE1(temp);
+	tran.TxDat[23] = BYTE0(temp);
+
+	temp = eskf.Acc_bias[1]*10000;								//user_data2	Y位置期望
+	tran.TxDat[24] = BYTE1(temp);
+	tran.TxDat[25] = BYTE0(temp);
+
+	temp = eskf.Acc_bias[2]*10000;								//user_data3	Z位置期望
+	tran.TxDat[26] = BYTE1(temp);
+	tran.TxDat[27] = BYTE0(temp);
+
+	temp = eskf.Gyro_bias[0]*100000;								//user_data1	X位置期望
+	tran.TxDat[28] = BYTE1(temp);
+	tran.TxDat[29] = BYTE0(temp);
+
+	temp = eskf.Gyro_bias[1]*100000;								//user_data2	Y位置期望
+	tran.TxDat[30] = BYTE1(temp);
+	tran.TxDat[31] = BYTE0(temp);
+
+	temp = eskf.Gyro_bias[2]*100000;								//user_data3	Z位置期望
+	tran.TxDat[32] = BYTE1(temp);
+	tran.TxDat[33] = BYTE0(temp);
+
+	temp = eskf.P[0]*1e6;
+	tran.TxDat[34] = BYTE1(temp);
+	tran.TxDat[35] = BYTE0(temp);
+
+	temp = eskf.P[1]*1e6;
+	tran.TxDat[36] = BYTE1(temp);
+	tran.TxDat[37] = BYTE0(temp);
+
+	temp = eskf.P[2]*1e6;
+	tran.TxDat[38] = BYTE1(temp);
+	tran.TxDat[39] = BYTE0(temp);
+
+	temp = eskf.P[3]*1e6;
+	tran.TxDat[40] = BYTE1(temp);
+	tran.TxDat[41] = BYTE0(temp);
+
+	temp = eskf.P[4]*1e6;
+	tran.TxDat[42] = BYTE1(temp);
+	tran.TxDat[43] = BYTE0(temp);
+
+	temp = eskf.P[5]*1e6;
+	tran.TxDat[44] = BYTE1(temp);
+	tran.TxDat[45] = BYTE0(temp);
+
+	uint8_t sum = 0;
+	for(uint8_t i=0; i<46; i++) sum += TxDat[i];
+	TxDat[46] = sum;
+	return uart_Send_DMA((u8 *)TxDat, 47);
 }
 #endif
 

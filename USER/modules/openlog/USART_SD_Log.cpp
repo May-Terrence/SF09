@@ -85,6 +85,7 @@ void EskfDataStorage(void)
 	xQueuePeek(queueRCCommand, &rcCommand, 0);
 	xQueuePeek(queueAccDat, &acc, 0);
 	xQueuePeek(queueGyrDat, &gyro, 0);
+	xQueuePeek(queueDownsampleIMU, &imu, 0);
 	vs32 temp[60];
 	temp[0] = startTimer/100;
 	/*eskf data*/
@@ -94,62 +95,72 @@ void EskfDataStorage(void)
 	temp[4] = EskfLog.Ned_spd[0]*1000;
 	temp[5] = EskfLog.Ned_spd[1]*1000;
 	temp[6] = EskfLog.Ned_spd[2]*1000;
-	temp[7] = EskfLog.Attitude[0]*1000;
-	temp[8] = EskfLog.Attitude[1]*1000;
-	temp[9] = EskfLog.Attitude[2]*1000;
+//	temp[7] = EskfLog.Attitude[0]*1000;
+//	temp[8] = EskfLog.Attitude[1]*1000;
+//	temp[9] = EskfLog.Attitude[2]*1000;
 
 	/*OrdinaryGPS data*/
-	temp[10] = GpsLog.timestamp;
-	temp[11] = GpsLog.NED[0]*1000;
-	temp[12] = GpsLog.NED[1]*1000;
-	temp[13] = GpsLog.NED[2]*1000;
-	temp[14] = GpsLog.NED_spd[0]*1000;
-	temp[15] = GpsLog.NED_spd[1]*1000;
-	temp[16] = GpsLog.NED_spd[2]*1000;
-	temp[17] = GpsLog.gpsPosAccuracy*100;
-	temp[18] = GpsLog.gpsSpdAccuracy*100;
+//	temp[10] = GpsLog.timestamp;
+	temp[7] = GpsLog.NED[0]*1000;
+	temp[8] = GpsLog.NED[1]*1000;
+	temp[9] = GpsLog.NED[2]*1000;
+	temp[10] = GpsLog.NED_spd[0]*1000;
+	temp[11] = GpsLog.NED_spd[1]*1000;
+	temp[12] = GpsLog.NED_spd[2]*1000;
+//	temp[17] = GpsLog.gpsPosAccuracy*100;
+//	temp[18] = GpsLog.gpsSpdAccuracy*100;
 
 	/*baro data*/
-	temp[19] = baroAlt.timestamp;
-	temp[20] = baroAlt.altitude*1000;
-	temp[21] = baroAlt.altSlope*1000;
+//	temp[19] = baroAlt.timestamp;
+//	temp[20] = baroAlt.altitude*1000;
+//	temp[21] = baroAlt.altSlope*1000;
 
 	/*MAG data*/
-	temp[22] = 0;
-	temp[23] = mag.MagRel[0];
-	temp[24] = mag.MagRel[1];
-	temp[25] = mag.MagRel[2];
+//	temp[22] = 0;
+//	temp[23] = mag.MagRel[0];
+//	temp[24] = mag.MagRel[1];
+//	temp[25] = mag.MagRel[2];
 
 	/*IMU data*/
-	temp[26] = imu.timestamp;
-	temp[27] = acc.acc[0]*1000;
-	temp[28] = acc.acc[1]*1000;
-	temp[29] = acc.acc[2]*1000;
-	temp[30] = gyro.gyro[0]*1000;
-	temp[31] = gyro.gyro[1]*1000;
-	temp[32] = gyro.gyro[2]*1000;
+//	temp[26] = imu.timestamp;
+	temp[13] = acc.acc[0]*10000000;
+	temp[14] = acc.acc[1]*10000000;
+	temp[15] = acc.acc[2]*10000000;
+	temp[16] = gyro.gyro[0]*10000000*R2D;
+	temp[17] = gyro.gyro[1]*10000000*R2D;
+	temp[18] = gyro.gyro[2]*10000000*R2D;
 
 	/*mahany-q*/
-	temp[33] = 0;
-	temp[34] = 0;
-	temp[35] = 0;
-	temp[36] = 0;
+	temp[19] = EskfLog.Acc_bias[0]*1000;
+	temp[20] = EskfLog.Acc_bias[1]*1000;
+	temp[21] = EskfLog.Acc_bias[2]*1000;
+//	temp[36] = 0;
 
 	/*eskf_baro data*/
-	temp[37] = Eskf_baroLog.Pos[0]*1000;
-	temp[38] = Eskf_baroLog.Pos[1]*1000;
-	temp[39] = Eskf_baroLog.Pos[2]*1000;
-	temp[40] = Eskf_baroLog.Ned_spd[0]*1000;
-	temp[41] = Eskf_baroLog.Ned_spd[1]*1000;
-	temp[42] = Eskf_baroLog.Ned_spd[2]*1000;
-	temp[43] = Eskf_baroLog.Attitude[0]*1000;
-	temp[44] = Eskf_baroLog.Attitude[1]*1000;
-	temp[45] = Eskf_baroLog.Attitude[2]*1000;
-	for(int i=0;i<45;++i)
+	temp[22] = EskfLog.Pos0[0]*1000;
+	temp[23] = EskfLog.Pos0[1]*1000;
+	temp[24] = EskfLog.Pos0[2]*1000;
+	temp[25] = EskfLog.Ned_spd0[0]*1000;
+	temp[26] = EskfLog.Ned_spd0[1]*1000;
+	temp[27] = EskfLog.Ned_spd0[2]*1000;
+//	temp[28] = EskfLog.Attitude0[0]*1000;
+//	temp[29] = EskfLog.Attitude0[1]*1000;
+//	temp[30] = EskfLog.Attitude0[2]*1000;
+
+	temp[28] = EskfLog.Pos1[0]*1000;
+	temp[29] = EskfLog.Pos1[1]*1000;
+	temp[30] = EskfLog.Pos1[2]*1000;
+	temp[31] = EskfLog.Ned_spd1[0]*1000;
+	temp[32] = EskfLog.Ned_spd1[1]*1000;
+	temp[33] = EskfLog.Ned_spd1[2]*1000;
+//	temp[34] = EskfLog.Attitude1[0]*1000;
+//	temp[35] = EskfLog.Attitude1[1]*1000;
+//	temp[54] = EskfLog.Attitude1[2]*1000;
+	for(int i=0;i<33;++i)
 	{
 		openlog.record("%d,",temp[i]);
 	}
-	openlog.record("%d\r",temp[45]);
+	openlog.record("%d\r",temp[33]);
 	openlog.push_buff();
 //	vTaskResume(Openlog_send_Handle);
 }

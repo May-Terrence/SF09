@@ -135,6 +135,11 @@ float SQR(float x)
 	return x*x;
 }
 
+double SQRD(double x)
+{
+	return x*x;
+}
+
 float absf(float x)
 {
 	if(x<0)

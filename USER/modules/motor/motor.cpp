@@ -14,6 +14,7 @@
 /* USER CODE END Header */
 
 #include "motor.hpp"
+#include "hardware.h"
 
 //MOTOR motor(TIM4,TIM3,(char *)"MOTOR");
 
@@ -87,9 +88,9 @@ void MOTORMAG::motor_Init(void)
 			MagOff[2] = 12819;
 #endif
 #ifdef MF09II01
-			MagOff[0] = -2185.36;
-			MagOff[1] =  4350.75;
-			MagOff[2] =  9334.02;
+			MagOff[0] = -1944;
+			MagOff[1] =  4493;
+			MagOff[2] =  9196;
 #endif
 
 

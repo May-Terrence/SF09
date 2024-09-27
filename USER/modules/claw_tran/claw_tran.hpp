@@ -43,8 +43,8 @@ public:
 	bool uart_Send_DMA(uint8_t * pData,uint16_t Size);
 	void Open_Request_Tran(void);
 	void Close_Request_Tran(void);
-	void Start_Request_Tran(void);
-	void End_Request_Tran(void);
+//	void Start_Request_Tran(void);
+//	void End_Request_Tran(void);
 
 	HAL_LockTypeDef LockRx;
 	bool  TxFlag;		//标志位

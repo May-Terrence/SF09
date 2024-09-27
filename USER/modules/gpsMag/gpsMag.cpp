@@ -433,10 +433,10 @@ bool GPSMAG::Gps_Calc()
 		LLH[1] = lng * D2R;
 		LLH[2] = alti;
 
-		N = C_WGS84_a/sqrt( 1.0 - SQR(C_WGS84_e)*SQR(sin(LLH[0])));
+		N = C_WGS84_a/sqrt( 1.0 - SQRD(C_WGS84_e)*SQRD(sin(LLH[0])));
 		ECFF[0]= (N + LLH[2]) * cos(LLH[0]) * cos(LLH[1]);
 		ECFF[1]= (N + LLH[2]) * cos(LLH[0]) * sin(LLH[1]);
-		ECFF[2]= (N*(1-SQR(C_WGS84_e)) +LLH[2]) * sin(LLH[0]);
+		ECFF[2]= (N*(1-SQRD(C_WGS84_e)) +LLH[2]) * sin(LLH[0]);
 
 		ECFF[0] -= Zero_ECFF[0];
 		ECFF[1] -= Zero_ECFF[1];

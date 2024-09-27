@@ -117,18 +117,33 @@ void CONTROL_STEP::Control_Step()
 				else if (rcCommand.Key[3] == 2 )
 				{
 					CtrlIO.control_mode = 3;		//轨迹模式
-					claw.Start_Request_Tran();
+					if(claw.isClose) claw.Open_Request_Tran();
 
-					if(claw.isConnect){
-						claw.isConnect = false;
+					if(CtrlIO.last_control_mode != 3){
 						xQueuePeek(queuelaserFlow,&laserFlow,0);
 						CtrlLpIO.X_pos0 = CtrlFbck.X[0];//仅第一次记录xy当前位置
 						CtrlLpIO.Y_pos0 = CtrlFbck.Y[0];
 						CtrlLpIO.Z_pos0 = CtrlFbck.Z[0];
 						CtrlLpIO.Yaw0   = CtrlFbck.Ang[2];
 						CtrlLpIO.Z_laser_pos0 = laserFlow.heightFil;
-						if(claw.isClose) claw.Open_Request_Tran();
+						claw.isUpdate = false;
 					}
+
+					if(claw.isUpdate){
+						xQueuePeek(queueClaw, &claw_msg,0);
+						CtrlLpIO.X_claw_pos0 = claw_msg.Pos[0];//仅第一次记录xy当前位置
+						CtrlLpIO.Y_claw_pos0 = claw_msg.Pos[1];
+						CtrlLpIO.Z_claw_pos0 = claw_msg.Pos[2];
+					}
+
+					xQueuePeek(queuelaserFlow,&laserFlow,0);
+					CtrlLpIO.Z_diff_gps = CtrlFbck.Z[0] - CtrlLpIO.Z_pos0;
+					CtrlLpIO.Z_diff_laser = laserFlow.heightFil - CtrlLpIO.Z_laser_pos0;
+
+					Z_laser_err = (laserFlow.heightFil-CtrlLpIO.Z_laser_pos0)-(CtrlFbck.Z[0]-CtrlLpIO.Z_pos0+Z_err_cor);
+					Z_err_cor += pidLaser->PID_Controller(Z_laser_err,CtrlDt);
+					CtrlLpIO.Z_diff = CtrlFbck.Z[0] - CtrlLpIO.Z_pos0 + Z_err_cor;
+
 	// 				if(CtrlIO.last_control_mode != 3) 
 	// 				{
 	// 					CtrlLpIO.Ang_command[2] = CtrlFbck.Ang[2];
@@ -289,9 +304,8 @@ void CONTROL_STEP::Control_Step()
 //			  	  claw.isUpdate = false;
 //			  	  if(claw.isUpdate){
 //					  xQueuePeek(queueClaw, &claw_msg,0);
-//
-//					  CtrlLpIO.end_command[0] = CtrlLpIO.X_pos0 + claw_msg.Pos[0];
-//					  CtrlLpIO.end_command[0] = CtrlLpIO.Y_pos0 + claw_msg.Pos[1];
+//					  CtrlLpIO.end_command[0] = CtrlLpIO.X_pos0 + claw_msg.Pos[0] - CtrlLpIO.X_claw_pos0;
+//					  CtrlLpIO.end_command[0] = CtrlLpIO.Y_pos0 + claw_msg.Pos[1] - CtrlLpIO.Y_claw_pos0;
 //			  	  	  //CtrlLpIO.end_yaw = claw_msg.Yaw;
 //			  	  	  isReady = true;
 //			  	  }
@@ -502,6 +516,10 @@ void CONTROL_STEP::Tranfer_Data_Updata(void)
 	control_data.X_pos0 = CtrlLpIO.X_pos0;
 	control_data.Y_pos0 = CtrlLpIO.Y_pos0;
 	control_data.Z_pos0 = CtrlLpIO.Z_pos0;
+
+	control_data.Z_diff_gps = CtrlLpIO.Z_diff_gps;
+	control_data.Z_diff_laser = CtrlLpIO.Z_diff_laser;
+	control_data.Z_diff = CtrlLpIO.Z_diff;
 
 	xQueueOverwrite(queueControlTransfer,&control_data);
 }

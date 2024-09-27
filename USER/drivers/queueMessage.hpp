@@ -387,6 +387,8 @@ typedef struct
 
 	float X_pos0,Y_pos0,Z_pos0;
 
+	float Z_diff_gps{0},Z_diff_laser{0},Z_diff{0};
+
 }control_transfer_msg;
 typedef struct
 {
@@ -445,8 +447,18 @@ typedef struct
 	float Attitude[3];			//欧拉角,单位（弧度radian），roll,pitch,yaw
 	float Pos[3];				//卡尔曼北东地坐标，单位（弧度radian）
 	float Ned_spd[3];
-//	float Gyro_bias[3];
-//	float Acc_bias[3];
+	float Gyro_bias[3];
+	float Acc_bias[3];
+
+	float P[6]{0};
+
+	float Attitude0[3];			//欧拉角,单位（弧度radian），roll,pitch,yaw
+	float Pos0[3];				//卡尔曼北东地坐标，单位（弧度radian）
+	float Ned_spd0[3];
+
+	float Attitude1[3];			//欧拉角,单位（弧度radian），roll,pitch,yaw
+	float Pos1[3];				//卡尔曼北东地坐标，单位（弧度radian）
+	float Ned_spd1[3];
 
 //	float pos_cor[3];
 //	float vel_cor[3];

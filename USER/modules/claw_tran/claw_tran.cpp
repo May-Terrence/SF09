@@ -200,31 +200,31 @@ void CLAW::Close_Request_Tran(void)
 	claw.uart_Send_DMA((u8 *)claw.TxDat, 6);
 }
 
-void CLAW::Start_Request_Tran(void)
-{
-	claw.TxDat[0] = 0xCC;
-	claw.TxDat[1] = 0xCC;
-	claw.TxDat[2] = 0x00;
-	claw.TxDat[3] = 1;
-	claw.TxDat[4] = 0x00;
-	u8 sum = 0;
-	for(u8 i=0;i<5;i++)sum += claw.TxDat[i];
-		claw.TxDat[5] = sum;
-	claw.uart_Send_DMA((u8 *)claw.TxDat, 6);
-}
-
-void CLAW::End_Request_Tran(void)
-{
-	claw.TxDat[0] = 0xCC;
-	claw.TxDat[1] = 0xCC;
-	claw.TxDat[2] = 0x00;
-	claw.TxDat[3] = 1;
-	claw.TxDat[4] = 0x01;
-	u8 sum = 0;
-	for(u8 i=0;i<5;i++)sum += claw.TxDat[i];
-		claw.TxDat[5] = sum;
-	claw.uart_Send_DMA((u8 *)claw.TxDat, 6);
-}
+//void CLAW::Start_Request_Tran(void)
+//{
+//	claw.TxDat[0] = 0xCC;
+//	claw.TxDat[1] = 0xCC;
+//	claw.TxDat[2] = 0x00;
+//	claw.TxDat[3] = 1;
+//	claw.TxDat[4] = 0x00;
+//	u8 sum = 0;
+//	for(u8 i=0;i<5;i++)sum += claw.TxDat[i];
+//		claw.TxDat[5] = sum;
+//	claw.uart_Send_DMA((u8 *)claw.TxDat, 6);
+//}
+//
+//void CLAW::End_Request_Tran(void)
+//{
+//	claw.TxDat[0] = 0xCC;
+//	claw.TxDat[1] = 0xCC;
+//	claw.TxDat[2] = 0x00;
+//	claw.TxDat[3] = 1;
+//	claw.TxDat[4] = 0x01;
+//	u8 sum = 0;
+//	for(u8 i=0;i<5;i++)sum += claw.TxDat[i];
+//		claw.TxDat[5] = sum;
+//	claw.uart_Send_DMA((u8 *)claw.TxDat, 6);
+//}
 
 extern "C" void claw_main(void *argument)
 {

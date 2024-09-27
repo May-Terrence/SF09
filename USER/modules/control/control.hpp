@@ -36,6 +36,7 @@ using namespace Eigen;
 #include "trajectory/trajectory.hpp"
 #include "fly_point.h"
 #include <path_follow/pathFollow.hpp>
+#include "hardware.h"
 
 #define dt 0.01
 #define CTRLFB_NUM 1
@@ -54,6 +55,7 @@ using namespace Eigen;
 //float  Velz_end=0.6f;
 //float  Acc_alt_manu=0.3f;
 //--------------------模型--------------------
+#ifdef MF09II02
 #define HOVER_SPEED 1225.0f//
 #define GE_SPEED   0.1f;
 #define GE_ACC     -0.3f;
@@ -61,6 +63,17 @@ using namespace Eigen;
 #define IDLING_PWM 1600
 #define DRIFT_PWM HOVER_PWM-20//细桨1630
 #define GROSSMASS 1.85f//2.1f
+#endif
+
+#ifdef MF09II01
+#define HOVER_SPEED 1225.0f//
+#define GE_SPEED   0.1f;
+#define GE_ACC     -0.3f;
+#define HOVER_PWM 1650//细桨1650 //宽桨1545
+#define IDLING_PWM 1450
+#define DRIFT_PWM 1630//细桨1630 //宽桨1525
+#define GROSSMASS 1.85f//2.1f
+#endif
 
 
 #define INERTIA_X 0.0149f
@@ -187,6 +200,8 @@ typedef struct
 	int   XYZ_phase;
 	float POS_thr;
 	float X_pos0,Y_pos0,Z_pos0,Z_laser_pos0;
+	float X_claw_pos0,Y_claw_pos0,Z_claw_pos0;
+	float Z_diff_gps,Z_diff_laser,Z_diff;
 	float Yaw0;
 
 	int count;
@@ -373,6 +388,12 @@ public:
 	bool isGpsNormal=true;
 	bool isexceedLimit=false;
 
+
+	float Z_laser_err{0};
+	float Z_err_inter{0};
+	float Z_err_cor{0};
+	float last_laser_height{0};
+
 private:
 	uint32_t startTimer;
 	uint32_t stopTimer;
@@ -409,11 +430,6 @@ private:
 	float		 fly_radius {0.0};
 	uint16_t circleRemaining{0}; //圆弧运动时，将画多少个整圆，不足一个不算
 	uint16_t circleTraveled{0}; //圆弧运动时，已经画过多少个整圆
-
-	float Z_laser_err{0};
-	float Z_err_inter{0};
-	float Z_err_cor{0};
-	float last_laser_height{0};
 };
 
 

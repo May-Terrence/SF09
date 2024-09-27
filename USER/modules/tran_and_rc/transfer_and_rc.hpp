@@ -28,7 +28,7 @@ extern "C" {
 
 
 #define TRAN_RX_LEN		300
-#define TRAN_TX_LEN		60
+#define TRAN_TX_LEN		100
 
 #define RC_RX_LEN 300
 #define RC_TX_LEN 30

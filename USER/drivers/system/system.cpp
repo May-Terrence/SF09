@@ -220,7 +220,7 @@ void SYSTEM::taskCreat()
 	isTranReceiveTaskCreatSuccess = xTaskCreate ((TaskFunction_t)RC_Check_main, "RcCheckTask", (uint16_t)(128 * 4), NULL, (osPriority_t) osPriorityAboveNormal5, &RcCheckTaskHandle);
 //	isTranReceiveTaskCreatSuccess = xTaskCreate ((TaskFunction_t)ekf_main, "EkfTask", (uint16_t)(512 * 4), NULL, (osPriority_t) osPriorityHigh7, &ekfTaskHandle);
 	isTranReceiveTaskCreatSuccess = xTaskCreate ((TaskFunction_t)eskf_main, "EskfTask", (uint16_t)(1024 * 4), NULL, (osPriority_t) osPriorityHigh7, &eskfTaskHandle);
-	isTranReceiveTaskCreatSuccess = xTaskCreate ((TaskFunction_t)eskf_baro_main, "Eskf_baroTask", (uint16_t)(1024 * 4), NULL, (osPriority_t) osPriorityHigh7, &eskf_baroTaskHandle);
+//	isTranReceiveTaskCreatSuccess = xTaskCreate ((TaskFunction_t)eskf_baro_main, "Eskf_baroTask", (uint16_t)(1024 * 4), NULL, (osPriority_t) osPriorityHigh7, &eskf_baroTaskHandle);
 
 //	isTranReceiveTaskCreatSuccess = xTaskCreate ((TaskFunction_t)rm3100_main, "rm3100Task", (uint16_t)(128 * 4), NULL, (osPriority_t) osPriorityRealtime1, &rm3100TaskHandle);
 //	isFlowTaskCreatSuccess = xTaskCreate((TaskFunction_t)flow_main, "flowTask", (uint16_t)(128 * 4), NULL, (osPriority_t) osPriorityAboveNormal7, &flowTaskHandle);

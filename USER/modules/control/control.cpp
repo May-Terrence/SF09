@@ -26,14 +26,17 @@ void CONTROL::Control_Init()
 	CtrlLpIO.AngleLimitR  = 20*D2R;
 	CtrlLpIO.AngleLimitP  = 20*D2R;
 
-	CtrlLpIO.XY_phase          = 0;
-	CtrlLpIO.XY_phase1          = 0;
+	CtrlLpIO.XY_phase     = 0;
+	CtrlLpIO.XY_phase1    = 0;
 	CtrlLpIO.count=0;
 	CtrlLpIO.count1=0;
 	CtrlLpIO.X_pos0=0.0;
 	CtrlLpIO.Y_pos0=0.0;
 	CtrlLpIO.Z_pos0=0.0;
 	CtrlLpIO.Z_laser_pos0=0.0;
+	CtrlLpIO.X_claw_pos0=0.0;
+	CtrlLpIO.Y_claw_pos0=0.0;
+	CtrlLpIO.Z_claw_pos0=0.0;
 	CtrlLpIO.Yaw0=0.0;
 
 	Ctrltrack.PTP_Status = PTP_hover;
@@ -185,7 +188,7 @@ void CONTROL::Control_Init()
 		pidYRate->dLimit = 20;
 
 		//pidZRate
-		pidZRate->Kp = 1.8f;
+		pidZRate->Kp = 2.0f;
 		pidZRate->Ki = 0.05f;
 		pidZRate->Kd = 0.0f;
 		pidZRate->Kb = 0.0f;
@@ -1246,19 +1249,25 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 				xQueuePeek(queuelaserFlow,&laserFlow,0);
 				if((laserFlow.heightFil-CtrlLpIO.Z_laser_pos0)<0.6 &&(CtrlFbck.Z[0]-CtrlLpIO.Z_pos0)<0.6){
 					if(abs(laserFlow.heightFil-last_laser_height)<0.1){
-						Z_laser_err = (laserFlow.heightFil-CtrlLpIO.Z_laser_pos0)-(CtrlFbck.Z[0]-CtrlLpIO.Z_pos0-Z_err_cor);
+						Z_laser_err = (laserFlow.heightFil-CtrlLpIO.Z_laser_pos0)-(CtrlFbck.Z[0]-CtrlLpIO.Z_pos0+Z_err_cor);
 						Z_err_cor += pidLaser->PID_Controller(Z_laser_err,CtrlDt);
 					}
 				}
 
 				CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0-0.12f;
 				Z_err = CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0];
-				CtrlLpIO.Pos_err[2] = Z_err-Z_err_cor;
+				CtrlLpIO.Pos_err[2] = Z_err+Z_err_cor;
 				CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
 			}
 			else{
-				CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_laser_pos0-0.12f;
-				Z_err = CtrlLpIO.Pos_command[2] - laserFlow.heightFil;
+//				xQueuePeek(queuelaserFlow,&laserFlow,0);
+//				CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_laser_pos0-0.25f;
+//				Z_err = CtrlLpIO.Pos_command[2] - laserFlow.heightFil;
+//				CtrlLpIO.Pos_err[2] = Z_err;
+//				CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
+
+				CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0-0.12f;
+				Z_err = CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0];
 				CtrlLpIO.Pos_err[2] = Z_err;
 				CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
 			}
