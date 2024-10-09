@@ -103,6 +103,7 @@ typedef enum
 	GE        = 0x05U,   //地面效应
 	RETURNING = 0x06U,   //返航
 	LAUNCH    = 0x07U,
+	RELANDING = 0x08U,	 //重新降落
 }eFlightStatus;
 typedef struct
 {
@@ -261,7 +262,7 @@ typedef struct
 	bool  enable_Grab_flag{false};
 
 	float end_command[2]{0};
-	float end_yaw;
+	float end_yaw{0};
 }sLOOPIO;
 
 

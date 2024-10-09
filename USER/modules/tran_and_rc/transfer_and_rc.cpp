@@ -1748,7 +1748,7 @@ bool TRAN::uart_Send_User(void)//航点
 
 	vs16 temp;
 	tran.TxDat[2] = 0xF1;
-	tran.TxDat[3] = 56;
+	tran.TxDat[3] = 48;
 
 	temp = control_data.X_command[0]*100;					//user_data1	X位置期望
 	tran.TxDat[4] = BYTE1(temp);
@@ -1818,17 +1818,41 @@ bool TRAN::uart_Send_User(void)//航点
 	tran.TxDat[32] = BYTE1(temp);
 	tran.TxDat[33] = BYTE0(temp);
 
-	temp = control_data.Z_diff_gps*100;					//user_data19	X位置估计误差
+	temp = control_data.end_command[0]*100;					//user_data19	X位置估计误差
 	tran.TxDat[34] = BYTE1(temp);
 	tran.TxDat[35] = BYTE0(temp);
 
-	temp = control_data.Z_diff_laser*100;				//user_data20	Y位置估计误差
+	temp = control_data.end_command[1]*100;				//user_data20	Y位置估计误差
 	tran.TxDat[36] = BYTE1(temp);
 	tran.TxDat[37] = BYTE0(temp);
 
-	temp = control_data.Z_diff*100;						//user_data21	水平位置估计误差
+	temp = control_data.end_yaw*100;						//user_data21	水平位置估计误差
 	tran.TxDat[38] = BYTE1(temp);
 	tran.TxDat[39] = BYTE0(temp);
+
+//	temp = control_data.Ang[0]*R2D*100;						//user_data11	Euler角度反馈
+//	tran.TxDat[34] = BYTE1(temp);
+//	tran.TxDat[35] = BYTE0(temp);
+//
+//	temp = control_data.Ang[1]*R2D*100;						//user_data12
+//	tran.TxDat[36] = BYTE1(temp);
+//	tran.TxDat[37] = BYTE0(temp);
+//
+//	temp = control_data.Ang[2]*R2D*100;						//user_data13
+//	tran.TxDat[38] = BYTE1(temp);
+//	tran.TxDat[39] = BYTE0(temp);
+//
+//	temp = control_data.roll_command[0]*R2D*100;			//user_data14	Euler角度指令
+//	tran.TxDat[28] = BYTE1(temp);
+//	tran.TxDat[29] = BYTE0(temp);
+//
+//	temp = control_data.pitch_command[0]*R2D*100;			//user_data15
+//	tran.TxDat[30] = BYTE1(temp);
+//	tran.TxDat[31] = BYTE0(temp);
+//
+//	temp = control_data.yaw_command[0]*R2D*100;				//user_data16
+//	tran.TxDat[32] = BYTE1(temp);
+//	tran.TxDat[33] = BYTE0(temp);
 
 //	temp = laserFlow.height0*100;						//user_data22	激光原始值
 //	tran.TxDat[46] = BYTE1(temp);
@@ -1866,21 +1890,21 @@ bool TRAN::uart_Send_User(void)//航点
 	tran.TxDat[50] = BYTE1(temp);
 	tran.TxDat[51] = BYTE0(temp);
 
-	temp = control_data.X_err_estimate*100;			//user_data16	X位置估计
-	tran.TxDat[52] = BYTE1(temp);
-	tran.TxDat[53] = BYTE0(temp);
-
-	temp = control_data.Y_err_estimate*100;			//user_data17	Y位置估计
-	tran.TxDat[54] = BYTE1(temp);
-	tran.TxDat[55] = BYTE0(temp);
-
-	temp = control_data.XY_err_estimate*100;			//user_data17	Y位置估计
-	tran.TxDat[56] = BYTE1(temp);
-	tran.TxDat[57] = BYTE0(temp);
-
-	temp = control_data.enable_Grab_flag*100;			//user_data18	抓取标志
-	tran.TxDat[58] = BYTE1(temp);
-	tran.TxDat[59] = BYTE0(temp);
+//	temp = control_data.end_command[0]*100;			//user_data16	X位置估计
+//	tran.TxDat[52] = BYTE1(temp);
+//	tran.TxDat[53] = BYTE0(temp);
+//
+//	temp = control_data.end_command[1]*100;			//user_data17	Y位置估计
+//	tran.TxDat[54] = BYTE1(temp);
+//	tran.TxDat[55] = BYTE0(temp);
+//
+//	temp = control_data.end_yaw*100;			//user_data17	Y位置估计
+//	tran.TxDat[56] = BYTE1(temp);
+//	tran.TxDat[57] = BYTE0(temp);
+//
+//	temp = control_data.enable_Grab_flag*100;			//user_data18	抓取标志
+//	tran.TxDat[58] = BYTE1(temp);
+//	tran.TxDat[59] = BYTE0(temp);
 
 //	temp = control_output_msg.mt_output[0];					//user_data15	电机1PWM
 //	tran.TxDat[32] = BYTE1(temp);
@@ -1932,9 +1956,9 @@ bool TRAN::uart_Send_User(void)//航点
 
 
 	uint8_t sum = 0;
-	for(uint8_t i=0; i<60; i++) sum += TxDat[i];
-	TxDat[60] = sum;
-	return uart_Send_DMA((u8 *)TxDat, 61);
+	for(uint8_t i=0; i<52; i++) sum += TxDat[i];
+	TxDat[52] = sum;
+	return uart_Send_DMA((u8 *)TxDat, 53);
 }
 #endif
 

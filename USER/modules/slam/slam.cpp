@@ -169,32 +169,60 @@ void SLAM::Command_Receive(void)
 //	uart_Send_Check();
 }
 
-void SLAM::Relative_Position_Transfer(void)
+void SLAM::Relative_Position_Transfer(bool flag)
 {
 	xQueuePeek(queueGps,&gps,0);
+	xQueuePeek(queueESKF,&eskf,0);
+	xQueuePeek(queueAhrsEuler, &ahrsEuler, 0);
 
 	float temp;
 	slam.TxDat[0] = 0xBB;
 	slam.TxDat[1] = 0xAA;
 	slam.TxDat[2] = 0x02;
-	slam.TxDat[3] = 8;
+//	slam.TxDat[3] = 8;
 
-	temp = gps.lng;				//user_data1	经度
-	slam.TxDat[4] = BYTE3(temp);
-	slam.TxDat[5] = BYTE2(temp);
-	slam.TxDat[6] = BYTE1(temp);
-	slam.TxDat[7] = BYTE0(temp);
+//	temp = gps.lng;				//user_data1	经度
+//	slam.TxDat[4] = BYTE3(temp);
+//	slam.TxDat[5] = BYTE2(temp);
+//	slam.TxDat[6] = BYTE1(temp);
+//	slam.TxDat[7] = BYTE0(temp);
+//
+//	temp = gps.lat;				//user_data2	纬度
+//	slam.TxDat[8] = BYTE3(temp);
+//	slam.TxDat[9] = BYTE2(temp);
+//	slam.TxDat[10] = BYTE1(temp);
+//	slam.TxDat[11] = BYTE0(temp);
 
-	temp = gps.lat;				//user_data2	纬度
-	slam.TxDat[8] = BYTE3(temp);
-	slam.TxDat[9] = BYTE2(temp);
-	slam.TxDat[10] = BYTE1(temp);
-	slam.TxDat[11] = BYTE0(temp);
+	struct s_slam_tran *slam_tran;
+	uint8_t len = sizeof(struct s_slam_tran);
+	TxDat[3] = len+1;
+
+	slam_tran = (struct s_slam_tran *)(TxDat+4);
+
+	slam_tran->lng = gps.lng;
+	slam_tran->lat = gps.lat;
+	slam_tran->n = eskf.Pos[0];
+	slam_tran->e = eskf.Pos[1];
+	slam_tran->d = eskf.Pos[2];
+
+	Quaternion<float> q;
+	Vector3f Ang;
+	for(int i=0;i<3;i++){
+		Ang[i] = ahrsEuler.Ang[i];
+	}
+	q = eul2qua(Ang);
+	slam_tran->x = q.x();
+	slam_tran->y = q.y();
+	slam_tran->z = q.z();
+	slam_tran->w = q.w();
+
+	if(flag) TxDat[len+4] = 0x01;
+	else TxDat[len+4] = 0x00;
 
 	uint8_t sum = 0;
-	for(uint8_t i=0; i<12; i++) sum += TxDat[i];
-	TxDat[12] = sum;
-	USART1_Send_DMA((u8 *)slam.TxDat, 13);
+	for(uint8_t i=0; i<len+5; i++) sum += TxDat[i];
+	TxDat[len+5] = sum;
+	USART1_Send_DMA((u8 *)slam.TxDat, len+6);
 }
 
 void SLAM::Status_Transfer(void)

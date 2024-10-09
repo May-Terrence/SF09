@@ -389,6 +389,9 @@ typedef struct
 
 	float Z_diff_gps{0},Z_diff_laser{0},Z_diff{0};
 
+	float end_command[2]{0};
+	float end_yaw{0};
+
 }control_transfer_msg;
 typedef struct
 {

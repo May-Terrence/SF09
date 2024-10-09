@@ -188,8 +188,8 @@ void CONTROL::Control_Init()
 		pidYRate->dLimit = 20;
 
 		//pidZRate
-		pidZRate->Kp = 2.0f;
-		pidZRate->Ki = 0.05f;
+		pidZRate->Kp = 1.4f;
+		pidZRate->Ki = 0.04f;
 		pidZRate->Kd = 0.0f;
 		pidZRate->Kb = 0.0f;
 		pidZRate->eLimit = 20;
@@ -215,7 +215,7 @@ void CONTROL::Control_Init()
 		pidY->dLimit = 200;
 
 		//pidZ
-		pidZ->Kp = 2.0f;
+		pidZ->Kp = 1.0f;
 		pidZ->Ki = 0.0f;
 		pidZ->Kd = 0.0f;
 		pidZ->Kb = 0.0f;
@@ -733,12 +733,12 @@ void CONTROL::OneKeyTakeOff(void)
 	float sinY,cosY;
 	sinY = sinf(CtrlFbck.Ang[2]);
 	cosY = cosf(CtrlFbck.Ang[2]);
+	static bool ini=false;
 
 //	if(!slam.Ready_Take_off || !claw.isOpen) return;
 
 	if(CtrlIO.FlightStatus == IDLING)
 	{
-		static bool ini=false;
 		if( !ini ) {
 //			CtrlLpIO.X_pos0 = CtrlFbck.X[0];//记录xy当前位置
 //			CtrlLpIO.Y_pos0 = CtrlFbck.Y[0];
@@ -746,7 +746,7 @@ void CONTROL::OneKeyTakeOff(void)
 
 			CtrlLpIO.Pos_command[0] = CtrlLpIO.X_pos0;
 			CtrlLpIO.Pos_command[1] = CtrlLpIO.Y_pos0;
-			CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0 - 0.8f;//当前高度+3m作为高度给定
+			CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0 - 1.5f;//当前高度+3m作为高度给定
 			CtrlLpIO.Ang_command[2] = CtrlFbck.Ang[2];//锁航向
 
 			ini = true;
@@ -757,7 +757,7 @@ void CONTROL::OneKeyTakeOff(void)
 	{
 		static int num = 0;
 		num++;
-		if( num > 50 ){
+		if( num > 80 ){
 			num = 0;
 			CtrlIO.FlightStatus = TAKEOFF;
 		}
@@ -783,6 +783,7 @@ void CONTROL::OneKeyTakeOff(void)
 		CtrlIO.FlightStatus = AIR;
 		rcCommand.OneKeyTakeoff = false;
 		rcCommand.TakeOffFinish = true;
+		ini = false;
 	}
 	CtrlLpIO.Acc_command[0] = 0.0f;
 	CtrlLpIO.Acc_command[1] = 0.0f;
@@ -834,7 +835,7 @@ void CONTROL::Auto_flypoint()
 	switch(Ctrltrack.PTP_Status)
 	{
 	case PTP_hover://定点
-		add_differentiation();
+//		add_differentiation();
 		CtrlLpIO.Vel_command[0] = fConstrain(CtrlLpIO.Vel_command[0],-1,1);
 		CtrlLpIO.Vel_command[1] = fConstrain(CtrlLpIO.Vel_command[1],-1,1);
 		if(point_list[num].enable ==1 && Ctrltrack.flypoint_start == true){
@@ -1244,37 +1245,40 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 //			}
 
 //			if(Turn_Heading(CtrlLpIO.end_yaw)){
-			add_differentiation();
-			if(rcCommand.Key[1]==2){
-				xQueuePeek(queuelaserFlow,&laserFlow,0);
-				if((laserFlow.heightFil-CtrlLpIO.Z_laser_pos0)<0.6 &&(CtrlFbck.Z[0]-CtrlLpIO.Z_pos0)<0.6){
-					if(abs(laserFlow.heightFil-last_laser_height)<0.1){
-						Z_laser_err = (laserFlow.heightFil-CtrlLpIO.Z_laser_pos0)-(CtrlFbck.Z[0]-CtrlLpIO.Z_pos0+Z_err_cor);
-						Z_err_cor += pidLaser->PID_Controller(Z_laser_err,CtrlDt);
-					}
-				}
+//			add_differentiation();
 
-				CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0-0.12f;
-				Z_err = CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0];
-				CtrlLpIO.Pos_err[2] = Z_err+Z_err_cor;
-				CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
-			}
-			else{
+/*激光融合ESKF*/
+//				xQueuePeek(queuelaserFlow,&laserFlow,0);
+//				if((laserFlow.heightFil-CtrlLpIO.Z_laser_pos0)<0.6 &&(CtrlFbck.Z[0]-CtrlLpIO.Z_pos0)<0.6){
+//					if(abs(laserFlow.heightFil-last_laser_height)<0.1){
+//						Z_laser_err = (laserFlow.heightFil-CtrlLpIO.Z_laser_pos0)-(CtrlFbck.Z[0]-CtrlLpIO.Z_pos0+Z_err_cor);
+//						Z_err_cor += pidLaser->PID_Controller(Z_laser_err,CtrlDt);
+//					}
+//				}
+//				CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0-0.12f;
+//				Z_err = CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0];
+//				CtrlLpIO.Pos_err[2] = Z_err+Z_err_cor;
+//				CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
+
+
+/*激光*/
 //				xQueuePeek(queuelaserFlow,&laserFlow,0);
 //				CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_laser_pos0-0.25f;
 //				Z_err = CtrlLpIO.Pos_command[2] - laserFlow.heightFil;
 //				CtrlLpIO.Pos_err[2] = Z_err;
 //				CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
 
-				CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0-0.12f;
+/*ESKF*/
+				CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0-0.15f;
 				Z_err = CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0];
 				CtrlLpIO.Pos_err[2] = Z_err;
 				CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
-			}
+//			}
 
 			//NED系下
 			static int cnt = 0;
 			static int GE_cnt = 0;
+			static int RL_cnt = 0;
 //			float ax = acc_fil.acc_filter[0];
 //			float ay = acc_fil.acc_filter[1];
 //			float AX = cos(CtrlFbck.Ang[1])*ax + sin(CtrlFbck.Ang[0])*sin(CtrlFbck.Ang[1])*ay;//机体系到地球系的旋转矩阵只取前两列
@@ -1287,10 +1291,10 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 			if(abs(CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0])<pid[15].Kp){
 				if(CtrlLpIO.X_err_estimate<pid[15].Ki && CtrlLpIO.Y_err_estimate<pid[15].Ki && CtrlLpIO.XY_err_estimate<pid[15].Ki){
 					CtrlLpIO.enable_Grab_flag = true;
-					if(++cnt>20)
+					if(++cnt>10)
 						claw.Close_Request_Tran();
 					if(claw.isClose){
-						if(++GE_cnt>500){
+						if(++GE_cnt>200){
 							CtrlIO.FlightStatus = GE;
 							rcCommand.OneKeyLanding = false;
 						}
@@ -1298,12 +1302,32 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 				}
 				else{
 					cnt = 0;
+					RL_cnt++;
 					CtrlLpIO.enable_Grab_flag = false;
 				}
 			}
 			else{
 				cnt =0;
+				RL_cnt++;
 				CtrlLpIO.enable_Grab_flag = false;
+			}
+			if(RL_cnt>500){
+				CtrlIO.FlightStatus = RELANDING;
+				RL_cnt = 0;
+			}
+		}
+		if(CtrlIO.FlightStatus == RELANDING){
+			CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0-0.8f;
+			Z_err = CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0];
+			CtrlLpIO.Pos_err[2] = Z_err;
+			CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
+
+			static int L_cnt = 0;
+			if(abs(CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0])<0.02){
+				if(++L_cnt>200){
+					CtrlIO.FlightStatus = LANDING;
+					L_cnt = 0;
+				}
 			}
 		}
 	}

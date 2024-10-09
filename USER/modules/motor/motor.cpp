@@ -83,9 +83,9 @@ void MOTORMAG::motor_Init(void)
 	LL_USART_EnableIT_IDLE(Motor_DMA_UART);
 
 #ifdef MF09II02
-			MagOff[0] = -5078;
-			MagOff[1] = 29;
-			MagOff[2] = 12819;
+			MagOff[0] = -5198;
+			MagOff[1] = 330;
+			MagOff[2] = 12959;
 #endif
 #ifdef MF09II01
 			MagOff[0] = -1944;
@@ -121,7 +121,12 @@ bool MOTORMAG::uart_Send_DMA(uint8_t * pData,uint16_t Size)
 }
 
 #ifdef motor_U8
+#ifdef MF09II02
 MOTORMAG motormag(UART8,(char*) "MOTORMAG",(char*) "+Y-X+Z");//"-Y-X-Z"
+#endif
+#ifdef MF09II01
+MOTORMAG motormag(UART8,(char*) "MOTORMAG",(char*) "-Y-X-Z");
+#endif
 
 void UART8_IRQHandler(void)
 {

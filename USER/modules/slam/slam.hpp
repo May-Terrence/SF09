@@ -10,6 +10,7 @@
 
 #include "system/system.hpp"
 #include "userlib/userlib.hpp"
+#include "eskf/utility.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,8 +19,8 @@ extern "C" {
 #define slamRxStream LL_DMA_STREAM_2
 #define slamTxStream LL_DMA_STREAM_7
 
-#define SLAM_RX_LEN 30
-#define SLAM_TX_LEN 30
+#define SLAM_RX_LEN 50
+#define SLAM_TX_LEN 50
 
 void USART1_IRQHandler(void);
 void DMA2_Stream2_IRQHandler(void); //接收DMA中断
@@ -54,7 +55,7 @@ public:
 
 	void SLAM_Init();
 	void Command_Receive(void);
-	void Relative_Position_Transfer(void);
+	void Relative_Position_Transfer(bool flag=false);
 	void Status_Transfer(void);
 	void Take_off_Request_Transfer(void);
 	void Land_Request_Transfer(void);
@@ -86,8 +87,24 @@ private:
 
 	SLAM_msg slam_msg;
 	gps_msg gps;
+	eskf_msg eskf;
+	ahrs_euler_msg ahrsEuler;
 };
 #endif
+
+#pragma pack(1)
+struct s_slam_tran
+{
+    double lng;
+    double lat;
+    float n;
+    float e;
+    float d;
+    float x;
+    float y;
+    float z;
+    float w;
+};
 
 extern SLAM slam;
 

@@ -22,7 +22,7 @@ void ESKF::init(const MAHANYCPF& mahany)
 	//-----------------------------------------离散Q阵-------------------------------------------
 	Matrix<float,12,1> Q_diag; //包括速度,姿态,加速度,和角速度偏置对应的协方差矩阵
 	//         σav^2I·dt^2(x)       y              z             σgv^2I·dt^2(x)          y               z               σau^2I·dt(x)     y      z          σgu^2I·dt(x)    y      z
-	Q_diag<<  1e-4*pow(dt,2), 1e-4*pow(dt,2),   1e-2*pow(dt,2),    1e-6*pow(dt,2),   1e-6*pow(dt,2), 1e-6*pow(dt,2),     1e-7*dt,	  1e-7*dt, 1e-7*dt,   1e-10*dt,  1e-10*dt,  1e-10*dt;
+	Q_diag<<  1e-5*pow(dt,2), 1e-5*pow(dt,2),   1e-2*pow(dt,2),    1e-6*pow(dt,2),   1e-6*pow(dt,2), 1e-6*pow(dt,2),     1e-7*dt,	  1e-7*dt, 1e-7*dt,   1e-10*dt,  1e-10*dt,  1e-10*dt;
 	Q = Q_diag.asDiagonal();
 
 	//-------------------R阵--------------------

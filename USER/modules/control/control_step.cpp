@@ -117,7 +117,6 @@ void CONTROL_STEP::Control_Step()
 				else if (rcCommand.Key[3] == 2 )
 				{
 					CtrlIO.control_mode = 3;		//轨迹模式
-					if(claw.isClose) claw.Open_Request_Tran();
 
 					if(CtrlIO.last_control_mode != 3){
 						xQueuePeek(queuelaserFlow,&laserFlow,0);
@@ -126,10 +125,8 @@ void CONTROL_STEP::Control_Step()
 						CtrlLpIO.Z_pos0 = CtrlFbck.Z[0];
 						CtrlLpIO.Yaw0   = CtrlFbck.Ang[2];
 						CtrlLpIO.Z_laser_pos0 = laserFlow.heightFil;
-						claw.isUpdate = false;
-					}
 
-					if(claw.isUpdate){
+						if(claw.isClose) claw.Open_Request_Tran();
 						xQueuePeek(queueClaw, &claw_msg,0);
 						CtrlLpIO.X_claw_pos0 = claw_msg.Pos[0];//仅第一次记录xy当前位置
 						CtrlLpIO.Y_claw_pos0 = claw_msg.Pos[1];
@@ -298,19 +295,22 @@ void CONTROL_STEP::Control_Step()
 			  if(rcCommand.OneKeyTakeoff == true)  OneKeyTakeOff();
 			  if(CtrlIO.FlightStatus == AIR && rcCommand.OneKeyLanding == false) Auto_flypoint();
 //			  if(CtrlIO.FlightStatus == AIR && rcCommand.OneKeyLanding == false) Auto_flycircle();//飞圆，测试前请确保磁力计数据正常
-			  if(rcCommand.OneKeyLanding == true)  OneKeyLanding(0,0,false,true);
-//			  if(slam.Ready_Land){
-//			  	  static bool isReady = false;
-//			  	  claw.isUpdate = false;
-//			  	  if(claw.isUpdate){
-//					  xQueuePeek(queueClaw, &claw_msg,0);
-//					  CtrlLpIO.end_command[0] = CtrlLpIO.X_pos0 + claw_msg.Pos[0] - CtrlLpIO.X_claw_pos0;
-//					  CtrlLpIO.end_command[0] = CtrlLpIO.Y_pos0 + claw_msg.Pos[1] - CtrlLpIO.Y_claw_pos0;
-//			  	  	  //CtrlLpIO.end_yaw = claw_msg.Yaw;
-//			  	  	  isReady = true;
-//			  	  }
-//			  	  if(isReady) OneKeyLanding(CtrlLpIO.end_command[0],CtrlLpIO.end_command[1],true,true);
-//			  }
+//			  if(rcCommand.OneKeyLanding == true)  OneKeyLanding(0,0,false,true);
+//			  if(slam.Ready_Land)
+			  if(rcCommand.OneKeyLanding == true){
+				  if(rcCommand.Key[1]==2){
+					  static bool isReady=false;
+					  if(!isReady){
+						  xQueuePeek(queueClaw, &claw_msg,0);
+						  CtrlLpIO.end_command[0] = CtrlLpIO.X_pos0 + claw_msg.Pos[0] - CtrlLpIO.X_claw_pos0;
+						  CtrlLpIO.end_command[0] = CtrlLpIO.Y_pos0 + claw_msg.Pos[1] - CtrlLpIO.Y_claw_pos0;
+						  CtrlLpIO.end_yaw = claw_msg.Yaw;
+						  isReady = true;
+					  }
+					  OneKeyLanding(CtrlLpIO.end_command[0],CtrlLpIO.end_command[1],true,true);
+				  }
+				  else OneKeyLanding(0,0,false,true);
+			  }
 
 //			  trackPath();
 //			  frog_jump();
@@ -520,6 +520,10 @@ void CONTROL_STEP::Tranfer_Data_Updata(void)
 	control_data.Z_diff_gps = CtrlLpIO.Z_diff_gps;
 	control_data.Z_diff_laser = CtrlLpIO.Z_diff_laser;
 	control_data.Z_diff = CtrlLpIO.Z_diff;
+
+	control_data.end_command[0] = CtrlLpIO.end_command[0];
+	control_data.end_command[1] = CtrlLpIO.end_command[1];
+	control_data.end_yaw = CtrlLpIO.end_yaw;
 
 	xQueueOverwrite(queueControlTransfer,&control_data);
 }

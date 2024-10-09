@@ -126,7 +126,7 @@ void EskfDataStorage(void)
 	temp[13] = acc.acc[0]*10000000;
 	temp[14] = acc.acc[1]*10000000;
 	temp[15] = acc.acc[2]*10000000;
-	temp[16] = gyro.gyro[0]*10000000*R2D;
+	temp[16] = gyro.temperature*1000;
 	temp[17] = gyro.gyro[1]*10000000*R2D;
 	temp[18] = gyro.gyro[2]*10000000*R2D;
 
