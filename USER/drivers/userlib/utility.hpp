@@ -5,8 +5,8 @@
  *      Author: 刘成吉
  */
 
-#ifndef MODULES_ESKF_UTILITY_HPP_
-#define MODULES_ESKF_UTILITY_HPP_
+#ifndef DRIVERS_USERLIB_UTILITY_HPP_
+#define DRIVERS_USERLIB_UTILITY_HPP_
 
 
 #ifdef __cplusplus
@@ -73,4 +73,4 @@ inline Matrix3f crossM(const Vector3f& vec)
 }
 
 #endif
-#endif /* MODULES_ESKF_UTILITY_HPP_ */
+#endif /* DRIVERS_USERLIB_UTILITY_HPP_ */

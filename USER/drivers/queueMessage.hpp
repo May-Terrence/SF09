@@ -20,6 +20,7 @@
 
 #include "main.h"
 #include <stdbool.h>
+#include <userlib/utility.hpp>
 #include "userlib/data_struct.h"
 
 //#include <Eigen>
@@ -73,6 +74,7 @@ typedef enum
 	PTP_XYZ_Fly 	 = 0x04U,	//三维飞行
 	PTP_Arrive  = 0x05U,	//到达标志位
 	NonPTP   = 0x06U,
+	TEMPORARY_BRAKE = 0x07U, //临时刹车
 }ePTP_Status;
 
 typedef enum
@@ -528,7 +530,9 @@ typedef struct
 
 typedef struct
 {
-	float Pos[3];//X,Y,Z
+	float body_Pos[3];//X,Y,Z
+	Quaternion<float> body_q;
+	Vector3f body_Ang;
 }SLAM_msg;
 
 #ifdef __cplusplus

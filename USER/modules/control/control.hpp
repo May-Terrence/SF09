@@ -37,6 +37,7 @@ using namespace Eigen;
 #include "fly_point.h"
 #include <path_follow/pathFollow.hpp>
 #include "hardware.h"
+#include <slam/slam.hpp>
 
 #define dt 0.01
 #define CTRLFB_NUM 1
@@ -383,6 +384,7 @@ public:
 	RC_command_msg rcCommand;
 	fly_point fly_point_overwrite;
 	laserFlow_msg laserFlow;
+	SLAM_msg slam_msg;
 
 	FlyPoint point_list[10];
 	Data_3D<float> position;

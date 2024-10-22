@@ -884,6 +884,17 @@ void CONTROL::Auto_flypoint()
 		CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
 		CtrlLpIO.Vel_command[2] = fConstrain(CtrlLpIO.Vel_command[2],-1,0.5);
 
+	if(slam.target){
+		Ctrltrack.PTP_Status = TEMPORARY_BRAKE;
+		CtrlLpIO.Ang_command[2] = CtrlFbck.Ang[2];//锁航向
+		CtrlLpIO.brake_cnt.CNT  = 0;
+		CtrlLpIO.brake_mode     = true;
+		CtrlLpIO.Vel_command[0] = CtrlFbck.XH[1];
+		CtrlLpIO.Vel_command[1] = 0.0;
+		pidXRate->integral      = 0.0;
+		pidYRate->integral      = 0.0;
+		slam.target             = false;
+	}
 	//-----------------------模式功能-----------------------------------------
 	switch(Ctrltrack.PTP_Status)
 	{
@@ -982,6 +993,33 @@ void CONTROL::Auto_flypoint()
 		}
         break;
 	case NonPTP:
+		break;
+	case TEMPORARY_BRAKE:
+		CtrlLpIO.Vel_command[0] = fConstrain(CtrlLpIO.Vel_command[0],-5,5);
+		CtrlLpIO.Vel_command[1] = fConstrain(CtrlLpIO.Vel_command[1],-1,1);
+		CtrlLpIO.brake_mode     = TarHit(&CtrlLpIO.brake_cnt,0.2,XY_err);
+
+		CtrlLpIO.Acc_command[0] = -Sign(CtrlFbck.XH[1])*2.0f;
+		CtrlLpIO.Vel_command[0] = CtrlLpIO.Vel_command[0] + CtrlLpIO.Acc_command[0]*CtrlDt;
+		if(absf(CtrlFbck.XH[1])<0.4)
+		{
+			CtrlLpIO.Acc_command[0] = 0.0f;
+			CtrlLpIO.Vel_command[0] = 0.0f;
+		}
+
+		if(CtrlLpIO.brake_mode == false){
+			for(int num=0;num<10;num++){
+				point_list[num].enable = 0;
+			}
+			xQueuePeek(queueSlam, &slam_msg,0);
+			position.data.x = slam_msg.body_Pos[0];
+			position.data.y = slam_msg.body_Pos[1];
+			position.data.z = slam_msg.body_Pos[2];
+			vel = 1.0;
+			fly_yaw = 0.0;
+			staytime = 2.0;
+			Ctrltrack.PTP_Status = PTP_TurnHead;
+		}
 		break;
 	default:break;
 	}

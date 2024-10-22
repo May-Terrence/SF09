@@ -37,7 +37,7 @@ void USART1_IRQHandler(void)
 
 		slam.RxDataSize = SLAM_RX_LEN - LL_DMA_GetDataLength(slamDMA, slamRxStream);
 		do{
-			if(slam.RxRawDat[0] != 0xBB || slam.RxRawDat[1] != 0xAA || slam.RxRawDat[3] != slam.RxDataSize-5) break;
+			if(slam.RxRawDat[0] != 0xBB || slam.RxRawDat[2] != slam.RxDataSize-3) break;
 			if(slam.LockRx == HAL_LOCKED) break;
 			slam.LockRx = HAL_LOCKED;
 			memcpy(slam.RxDat, slam.RxRawDat, slam.RxDataSize);
@@ -143,33 +143,88 @@ void SLAM::SLAM_Init(void)
 
 void SLAM::Command_Receive(void)
 {
-	if(slam.RxRawDat[2] == 0x00)
-	{
-		if(slam.RxRawDat[4] == 0x01)
-			slam.isCommunicating = true;
-	}
-	else if(slam.RxRawDat[2] == 0x01)
-	{
-		switch(slam.RxRawDat[4])
-		{
-		case 0x01:
-			Ready_Take_off = true;
+	if(slam.RxRawDat[1] == 0x04){
+		slam_msg.body_Pos[0] = ((s_slam_tran *)(&RxDat[3]))->n;
+		slam_msg.body_Pos[1] = ((s_slam_tran *)(&RxDat[3]))->e;
+		slam_msg.body_Pos[2] = ((s_slam_tran *)(&RxDat[3]))->d;
+		slam_msg.body_q.x()  = ((s_slam_tran *)(&RxDat[3]))->x;
+		slam_msg.body_q.y()  = ((s_slam_tran *)(&RxDat[3]))->y;
+		slam_msg.body_q.z()  = ((s_slam_tran *)(&RxDat[3]))->z;
+		slam_msg.body_q.w()  = ((s_slam_tran *)(&RxDat[3]))->w;
+		slam_msg.body_Ang    = qua2eul(slam_msg.body_q);
+
+		float sinY = sinf(slam_msg.body_Pos[2]);
+		float cosY = cosf(slam_msg.body_Pos[2]);
+		float body_YH = (slam_msg.body_Pos[0]*-sinY + slam_msg.body_Pos[1]*cosY);
+		float body_XH = (slam_msg.body_Pos[0]* cosY + slam_msg.body_Pos[1]*sinY);
+		switch(((s_slam_tran *)(&RxDat[3]))->quadrant){
+		case 1:
+			body_YH = (slam_msg.body_Pos[0]*-sinY + slam_msg.body_Pos[1]*cosY) - CORRECTION_DISTANCE;
 			break;
-		case 0x02:
-			Ready_Take_off = false;
+		case 2:
+			body_XH = (slam_msg.body_Pos[0]* cosY + slam_msg.body_Pos[1]*sinY) - CORRECTION_DISTANCE;
 			break;
-		case 0x03:
-			Ready_Land = true;
+		case 3:
+			body_YH = (slam_msg.body_Pos[0]*-sinY + slam_msg.body_Pos[1]*cosY) + CORRECTION_DISTANCE;
 			break;
-		case 0x04:
-			Ready_Land = false;
+		case 4:
+			body_XH = (slam_msg.body_Pos[0]* cosY + slam_msg.body_Pos[1]*sinY) + CORRECTION_DISTANCE;
 			break;
 		}
+		slam_msg.body_Pos[0] = (body_XH* cosY - body_YH*sinY);
+		slam_msg.body_Pos[1] = (body_XH* sinY + body_YH*cosY);
+		xQueueOverwrite(queueSlam, &slam_msg);
+		target = true;
+
+		uart_Send_Check();
 	}
-//	uart_Send_Check();
+
+//	if(slam.RxRawDat[2] == 0x00)
+//	{
+//		if(slam.RxRawDat[4] == 0x01)
+//			slam.isCommunicating = true;
+//	}
+//	else if(slam.RxRawDat[2] == 0x01)
+//	{
+//		switch(slam.RxRawDat[4])
+//		{
+//		case 0x01:
+//			Ready_Take_off = true;
+//			break;
+//		case 0x02:
+//			Ready_Take_off = false;
+//			break;
+//		case 0x03:
+//			Ready_Land = true;
+//			break;
+//		case 0x04:
+//			Ready_Land = false;
+//			break;
+//		}
+//	}
 }
 
-void SLAM::Relative_Position_Transfer(bool flag)
+void SLAM::Relative_Position_Transfer(void)
+{
+	xQueuePeek(queueGps,&gps,0);
+
+	float temp;
+	slam.TxDat[0] = 0xBB;
+	slam.TxDat[1] = 0x02;
+
+	struct s_slam_tran2car *slam_tran2car;
+	uint8_t len = sizeof(struct s_slam_tran2car);
+	TxDat[2] = len;
+
+	slam_tran2car = (struct s_slam_tran2car *)(TxDat+3);
+
+	slam_tran2car->lng = gps.lng;
+	slam_tran2car->lat = gps.lat;
+
+	USART1_Send_DMA((u8 *)slam.TxDat, len+4);
+}
+
+void SLAM::Show_Msg_Transfer(void)
 {
 	xQueuePeek(queueGps,&gps,0);
 	xQueuePeek(queueESKF,&eskf,0);
@@ -177,30 +232,14 @@ void SLAM::Relative_Position_Transfer(bool flag)
 
 	float temp;
 	slam.TxDat[0] = 0xBB;
-	slam.TxDat[1] = 0xAA;
-	slam.TxDat[2] = 0x02;
-//	slam.TxDat[3] = 8;
-
-//	temp = gps.lng;				//user_data1	经度
-//	slam.TxDat[4] = BYTE3(temp);
-//	slam.TxDat[5] = BYTE2(temp);
-//	slam.TxDat[6] = BYTE1(temp);
-//	slam.TxDat[7] = BYTE0(temp);
-//
-//	temp = gps.lat;				//user_data2	纬度
-//	slam.TxDat[8] = BYTE3(temp);
-//	slam.TxDat[9] = BYTE2(temp);
-//	slam.TxDat[10] = BYTE1(temp);
-//	slam.TxDat[11] = BYTE0(temp);
+	slam.TxDat[1] = 0x04;
 
 	struct s_slam_tran *slam_tran;
 	uint8_t len = sizeof(struct s_slam_tran);
-	TxDat[3] = len+1;
+	TxDat[2] = len;
 
-	slam_tran = (struct s_slam_tran *)(TxDat+4);
+	slam_tran = (struct s_slam_tran *)(TxDat+3);
 
-	slam_tran->lng = gps.lng;
-	slam_tran->lat = gps.lat;
 	slam_tran->n = eskf.Pos[0];
 	slam_tran->e = eskf.Pos[1];
 	slam_tran->d = eskf.Pos[2];
@@ -215,70 +254,61 @@ void SLAM::Relative_Position_Transfer(bool flag)
 	slam_tran->y = q.y();
 	slam_tran->z = q.z();
 	slam_tran->w = q.w();
+	slam_tran->quadrant = 0;
 
-	if(flag) TxDat[len+4] = 0x01;
-	else TxDat[len+4] = 0x00;
-
-	uint8_t sum = 0;
-	for(uint8_t i=0; i<len+5; i++) sum += TxDat[i];
-	TxDat[len+5] = sum;
-	USART1_Send_DMA((u8 *)slam.TxDat, len+6);
+	USART1_Send_DMA((u8 *)slam.TxDat, len+4);
 }
 
-void SLAM::Status_Transfer(void)
-{
-	slam.TxDat[0] = 0xBB;
-	slam.TxDat[1] = 0xAA;
-	slam.TxDat[2] = 0x01;
-	slam.TxDat[3] = 1;
-	slam.TxDat[4] = slam.status;
-
-	uint8_t sum = 0;
-	for(uint8_t i=0; i<5; i++) sum += TxDat[i];
-	TxDat[5] = sum;
-	USART1_Send_DMA((u8 *)slam.TxDat, 6);
-}
-
-void SLAM::Take_off_Request_Transfer(void)
-{
-	slam.TxDat[0] = 0xBB;
-	slam.TxDat[1] = 0xAA;
-	slam.TxDat[2] = 0x00;
-	slam.TxDat[3] = 1;
-	slam.TxDat[4] = 0x01;
-
-	uint8_t sum = 0;
-	for(uint8_t i=0; i<5; i++) sum += TxDat[i];
-	TxDat[5] = sum;
-	USART1_Send_DMA((u8 *)slam.TxDat, 6);
-}
-
-void SLAM::Land_Request_Transfer(void)
-{
-	slam.TxDat[0] = 0xBB;
-	slam.TxDat[1] = 0xAA;
-	slam.TxDat[2] = 0x00;
-	slam.TxDat[3] = 1;
-	slam.TxDat[4] = 0x02;
-
-	uint8_t sum = 0;
-	for(uint8_t i=0; i<5; i++) sum += TxDat[i];
-	TxDat[5] = sum;
-	USART1_Send_DMA((u8 *)slam.TxDat, 6);
-}
-
+//void SLAM::Status_Transfer(void)
+//{
+//	slam.TxDat[0] = 0xBB;
+//	slam.TxDat[1] = 0xAA;
+//	slam.TxDat[2] = 0x01;
+//	slam.TxDat[3] = 1;
+//	slam.TxDat[4] = slam.status;
+//
+//	uint8_t sum = 0;
+//	for(uint8_t i=0; i<5; i++) sum += TxDat[i];
+//	TxDat[5] = sum;
+//	USART1_Send_DMA((u8 *)slam.TxDat, 6);
+//}
+//
+//void SLAM::Take_off_Request_Transfer(void)
+//{
+//	slam.TxDat[0] = 0xBB;
+//	slam.TxDat[1] = 0xAA;
+//	slam.TxDat[2] = 0x00;
+//	slam.TxDat[3] = 1;
+//	slam.TxDat[4] = 0x01;
+//
+//	uint8_t sum = 0;
+//	for(uint8_t i=0; i<5; i++) sum += TxDat[i];
+//	TxDat[5] = sum;
+//	USART1_Send_DMA((u8 *)slam.TxDat, 6);
+//}
+//
+//void SLAM::Land_Request_Transfer(void)
+//{
+//	slam.TxDat[0] = 0xBB;
+//	slam.TxDat[1] = 0xAA;
+//	slam.TxDat[2] = 0x00;
+//	slam.TxDat[3] = 1;
+//	slam.TxDat[4] = 0x02;
+//
+//	uint8_t sum = 0;
+//	for(uint8_t i=0; i<5; i++) sum += TxDat[i];
+//	TxDat[5] = sum;
+//	USART1_Send_DMA((u8 *)slam.TxDat, 6);
+//}
+//
 bool SLAM::uart_Send_Check(void)
 {
 	slam.TxDat[0] = 0xBB;
-	slam.TxDat[1] = 0xAA;
-	TxDat[2] = 0x03;
-	TxDat[3] = 1;
-	TxDat[4] = 0x01;
+	TxDat[1] = 0x03;
+	TxDat[2] = 1;
+	TxDat[3] = 0x01;
 
-	uint8_t sum = 0;
-	for(uint8_t i=0; i<5; i++) sum += TxDat[i];
-	TxDat[5] = sum;
-	return USART1_Send_DMA((u8 *)TxDat, 6);
+	return USART1_Send_DMA((u8 *)TxDat, 4);
 }
 
 extern "C" void slam_main(void *argument)

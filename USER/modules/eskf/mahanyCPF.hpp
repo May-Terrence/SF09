@@ -15,7 +15,7 @@
 
 #ifdef __cplusplus
 #include <Eigen>
-#include "utility.hpp"
+#include <userlib/utility.hpp>
 #include <eskf/eskf.hpp>
 //#define dt	0.005f
 

@@ -4,7 +4,6 @@
  *  Created on: 2020年9月2日
  *      Author: 17900
  */
-#include <slam/slam.hpp>
 #include "control_step.hpp"
 #include <tran_and_rc/transfer_and_rc.hpp>
 #include "path_follow/pathFollow.hpp"
@@ -547,7 +546,7 @@ extern "C" void control_main(void *argument)
 		control_step.Control_Step();
 		control_step.Control_Step2();
 
-		if(cnt%500)
+		if(cnt%100)
 			slam.Show_Msg_Transfer();
 		if(cnt%200)
 			control_step.PID_Para_Update();
