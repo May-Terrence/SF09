@@ -1826,7 +1826,7 @@ bool TRAN::uart_Send_User(void)//航点
 	tran.TxDat[36] = BYTE1(temp);
 	tran.TxDat[37] = BYTE0(temp);
 
-	temp = control_data.end_yaw*100;						//user_data21	水平位置估计误差
+	temp = control_data.end_yaw*100;						//user_data17
 	tran.TxDat[38] = BYTE1(temp);
 	tran.TxDat[39] = BYTE0(temp);
 

@@ -226,10 +226,10 @@ void SYSTEM::taskCreat()
 //	isFlowTaskCreatSuccess = xTaskCreate((TaskFunction_t)flow_main, "flowTask", (uint16_t)(128 * 4), NULL, (osPriority_t) osPriorityAboveNormal7, &flowTaskHandle);
 
 	/* 在这里添加你的任务 */
-	xTaskCreate((TaskFunction_t)tskLog, 			"App.Log",    (uint16_t)(128 * 4), NULL, (osPriority_t) osPriorityAboveNormal2, &Log_Handle);
+//	xTaskCreate((TaskFunction_t)tskLog, 			"App.Log",    (uint16_t)(128 * 4), NULL, (osPriority_t) osPriorityAboveNormal2, &Log_Handle);
 	xTaskCreate((TaskFunction_t)laserFlow_main, 			"laserFlow",    (uint16_t)(128 * 4), NULL, (osPriority_t) osPriorityAboveNormal5, &laserFlowTaskHandle);
 	isClawTaskCreatSuccess = xTaskCreate ((TaskFunction_t)claw_main, "clawTask", (uint16_t)(256 * 4), NULL, (osPriority_t) osPriorityRealtime, &clawTaskHandle);
-//	isSlamTaskCreatSuccess = xTaskCreate ((TaskFunction_t)slam_main, "slamTask", (uint16_t)(256 * 4), NULL, (osPriority_t) osPriorityRealtime, &slamTaskHandle);
+	isSlamTaskCreatSuccess = xTaskCreate ((TaskFunction_t)slam_main, "slamTask", (uint16_t)(256 * 4), NULL, (osPriority_t) osPriorityRealtime, &slamTaskHandle);
 	/* 在这里添加你的任务 */
 
 }
@@ -340,7 +340,7 @@ void TIM5_IRQHandler(void)
 		}
 		if(_cnt%taskPeriod[2] == taskPeriod[2]-1)
 		{
-			osSemaphoreRelease(semLog);
+//			osSemaphoreRelease(semLog);
 //			osSemaphoreRelease(semRm3100);
 			osSemaphoreRelease(semEskf);
 //			osSemaphoreRelease(semEskf_baro);

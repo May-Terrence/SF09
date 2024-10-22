@@ -119,136 +119,136 @@ void CONTROL::Control_Init()
 	}
 
 	//pidRolRate
-		pidRolRate->Kp = 0.3;//0.25f;
-		pidRolRate->Ki = 0.0;//0.3f;
-		pidRolRate->Kd = 0.0f;
-		pidRolRate->Kb = 0.0f;
-		pidRolRate->eLimit = 4*PI;
-		pidRolRate->iLimit = 30*D2R;
-		pidRolRate->dLimit = PI;
+	pidRolRate->Kp = 0.3;//0.25f;
+	pidRolRate->Ki = 0.0;//0.3f;
+	pidRolRate->Kd = 0.0f;
+	pidRolRate->Kb = 0.0f;
+	pidRolRate->eLimit = 4*PI;
+	pidRolRate->iLimit = 30*D2R;
+	pidRolRate->dLimit = PI;
 
-		//pidPitRate
-		pidPitRate->Kp = 0.3;//0.25f;
-		pidPitRate->Ki = 0.0;//0.3f;
-		pidPitRate->Kd = 0.0f;
-		pidPitRate->Kb = 0.0f;
-		pidPitRate->eLimit = 4*PI;
-		pidPitRate->iLimit = 30*D2R;
-		pidPitRate->dLimit = PI;
+	//pidPitRate
+	pidPitRate->Kp = 0.3;//0.25f;
+	pidPitRate->Ki = 0.0;//0.3f;
+	pidPitRate->Kd = 0.0f;
+	pidPitRate->Kb = 0.0f;
+	pidPitRate->eLimit = 4*PI;
+	pidPitRate->iLimit = 30*D2R;
+	pidPitRate->dLimit = PI;
 
-		//pidYawRate
-		pidYawRate->Kp = 0.18;//0.13f;
-		pidYawRate->Ki = 0.0;//0.25f;
-		pidYawRate->Kd = 0.00f;
-		pidYawRate->Kb = 0.0f;
-		pidYawRate->eLimit = 4*PI;
-		pidYawRate->iLimit = 30*D2R;
-		pidYawRate->dLimit = PI;
+	//pidYawRate
+	pidYawRate->Kp = 0.18;//0.13f;
+	pidYawRate->Ki = 0.0;//0.25f;
+	pidYawRate->Kd = 0.00f;
+	pidYawRate->Kb = 0.0f;
+	pidYawRate->eLimit = 4*PI;
+	pidYawRate->iLimit = 30*D2R;
+	pidYawRate->dLimit = PI;
 
-		//pidRol
-		pidRol->Kp = 5.5;//4.0f;
-		pidRol->Ki = 0.0f;
-		pidRol->Kd = 0.0f;
-		pidRol->Kb = 0.0f;
-		pidRol->eLimit = PI;
-		pidRol->iLimit = PI;
+	//pidRol
+	pidRol->Kp = 5.5;//4.0f;
+	pidRol->Ki = 0.0f;
+	pidRol->Kd = 0.0f;
+	pidRol->Kb = 0.0f;
+	pidRol->eLimit = PI;
+	pidRol->iLimit = PI;
 
-		//pidPit
-		pidPit->Kp = 5.5;//4.0f;
-		pidPit->Ki = 0.0f;
-		pidPit->Kd = 0.0f;
-		pidPit->Kb = 0.0f;
-		pidPit->eLimit = PI;
-		pidPit->iLimit = PI;
+	//pidPit
+	pidPit->Kp = 5.5;//4.0f;
+	pidPit->Ki = 0.0f;
+	pidPit->Kd = 0.0f;
+	pidPit->Kb = 0.0f;
+	pidPit->eLimit = PI;
+	pidPit->iLimit = PI;
 
-		//pidYaw
-		pidYaw->Kp = 5.0f;
-		pidYaw->Ki = 0.1f;
-		pidYaw->Kd = 0.0f;
-		pidYaw->Kb = 0.0f;
-		pidYaw->eLimit = PI;
-		pidYaw->iLimit = PI;
+	//pidYaw
+	pidYaw->Kp = 5.0f;
+	pidYaw->Ki = 0.1f;
+	pidYaw->Kd = 0.0f;
+	pidYaw->Kb = 0.0f;
+	pidYaw->eLimit = PI;
+	pidYaw->iLimit = PI;
 
-		//pidXRate
-		pidXRate->Kp = 1.5f;
-		pidXRate->Ki = 0.0f;
-		pidXRate->Kd = 0.0f;
-		pidXRate->Kb = 0.0f;
-		pidXRate->eLimit = 20;
-		pidXRate->iLimit = 20;
-		pidXRate->dLimit = 20;
+	//pidXRate
+	pidXRate->Kp = 1.5f;
+	pidXRate->Ki = 0.0f;
+	pidXRate->Kd = 0.0f;
+	pidXRate->Kb = 0.0f;
+	pidXRate->eLimit = 20;
+	pidXRate->iLimit = 20;
+	pidXRate->dLimit = 20;
 
-		//pidYRate
-		pidYRate->Kp = 1.5f;
-		pidYRate->Ki = 0.0f;
-		pidYRate->Kd = 0.0f;
-		pidYRate->Kb = 0.0f;
-		pidYRate->eLimit = 20;
-		pidYRate->iLimit = 20;
-		pidYRate->dLimit = 20;
+	//pidYRate
+	pidYRate->Kp = 1.5f;
+	pidYRate->Ki = 0.0f;
+	pidYRate->Kd = 0.0f;
+	pidYRate->Kb = 0.0f;
+	pidYRate->eLimit = 20;
+	pidYRate->iLimit = 20;
+	pidYRate->dLimit = 20;
 
-		//pidZRate
-		pidZRate->Kp = 1.4f;
-		pidZRate->Ki = 0.04f;
-		pidZRate->Kd = 0.0f;
-		pidZRate->Kb = 0.0f;
-		pidZRate->eLimit = 20;
-		pidZRate->iLimit = 200;
-		pidZRate->dLimit = 20;
+	//pidZRate
+	pidZRate->Kp = 1.4f;
+	pidZRate->Ki = 0.04f;
+	pidZRate->Kd = 0.0f;
+	pidZRate->Kb = 0.0f;
+	pidZRate->eLimit = 20;
+	pidZRate->iLimit = 200;
+	pidZRate->dLimit = 20;
 
-		//pidX
-		pidX->Kp = 0.5f;
-		pidX->Ki = 0.0f;
-		pidX->Kd = 0.0f;
-		pidX->Kb = 0.0f;
-		pidX->eLimit = 200;
-		pidX->iLimit = 200;
-		pidX->dLimit = 200;
+	//pidX
+	pidX->Kp = 0.5f;
+	pidX->Ki = 0.0f;
+	pidX->Kd = 0.0f;
+	pidX->Kb = 0.0f;
+	pidX->eLimit = 200;
+	pidX->iLimit = 200;
+	pidX->dLimit = 200;
 
-		//pidY
-		pidY->Kp = 0.5f;
-		pidY->Ki = 0.0f;
-		pidY->Kd = 0.0f;
-		pidY->Kb = 0.0f;
-		pidY->eLimit = 200;
-		pidY->iLimit = 200;
-		pidY->dLimit = 200;
+	//pidY
+	pidY->Kp = 0.5f;
+	pidY->Ki = 0.0f;
+	pidY->Kd = 0.0f;
+	pidY->Kb = 0.0f;
+	pidY->eLimit = 200;
+	pidY->iLimit = 200;
+	pidY->dLimit = 200;
 
-		//pidZ
-		pidZ->Kp = 1.0f;
-		pidZ->Ki = 0.0f;
-		pidZ->Kd = 0.0f;
-		pidZ->Kb = 0.0f;
-		pidZ->eLimit = 20;
-		pidZ->iLimit = 200;
-		pidZ->dLimit = 20;
+	//pidZ
+	pidZ->Kp = 1.0f;
+	pidZ->Ki = 0.0f;
+	pidZ->Kd = 0.0f;
+	pidZ->Kb = 0.0f;
+	pidZ->eLimit = 20;
+	pidZ->iLimit = 200;
+	pidZ->dLimit = 20;
 
-		//pidTmp
-		pidTmp->Kp = 0.01f;
-		pidTmp->Ki = 0.05f;
-		pidTmp->Kd = 0.0f;
-		pidTmp->Kb = 0.0f;
-		pidTmp->eLimit = 20;
-		pidTmp->iLimit = 20;
-		pidTmp->dLimit = 20;
+	//pidTmp
+	pidTmp->Kp = 0.01f;
+	pidTmp->Ki = 0.05f;
+	pidTmp->Kd = 0.0f;
+	pidTmp->Kb = 0.0f;
+	pidTmp->eLimit = 20;
+	pidTmp->iLimit = 20;
+	pidTmp->dLimit = 20;
 
-		//pidThrust
-		pidThrust->Kp = 0.1f; //PID13
-		pidThrust->Ki = 0.05f;
-		pidThrust->Kd = 0.0f;
-		pidThrust->Kb = 0.0f;
-		pidThrust->eLimit = 200;
-		pidThrust->iLimit = 200;
-		pidThrust->dLimit = 200;
+	//pidThrust
+	pidThrust->Kp = 0.1f; //PID13
+	pidThrust->Ki = 0.05f;
+	pidThrust->Kd = 0.0f;
+	pidThrust->Kb = 0.0f;
+	pidThrust->eLimit = 200;
+	pidThrust->iLimit = 200;
+	pidThrust->dLimit = 200;
 
-		//pidLaser
-		pidLaser->Kp = 0.6f;
-		pidLaser->Ki = 0.09f;
-		pidLaser->Kd = 0.0f;
-		pidLaser->Kb = 0.0f;
-		pidLaser->eLimit = 0.1;
-		pidLaser->iLimit = 0.1;
-		pidLaser->dLimit = 0.1;
+	//pidLaser
+	pidLaser->Kp = 0.6f;
+	pidLaser->Ki = 0.09f;
+	pidLaser->Kd = 0.0f;
+	pidLaser->Kb = 0.0f;
+	pidLaser->eLimit = 0.1;
+	pidLaser->iLimit = 0.1;
+	pidLaser->dLimit = 0.1;
 
 	//调试信号
 //	pid[13].Kp = CtrlLpIO.gyro_gain;
@@ -493,15 +493,68 @@ void CONTROL::StatusClear()
 	CtrlLpIO.AngVel_command[2] =0.0f;
 }
 void CONTROL::virtualFence(){
-	float zLimit=10;//高度限制
-	if(CtrlFbck.Z[0] < CtrlLpIO.Z_pos0-zLimit){
-		  CtrlLpIO.Ang_command[0] = 0.0f;      //滚转角度输入0
-		  CtrlLpIO.Ang_command[1] = 0.0f;      //俯仰角度输入0
-		  CtrlLpIO.AngVel_command[2] =0.0f;
-		  isexceedLimit=true;
-		  In_Loop_Step2();
+	xQueuePeek(queueAccDatFil, &acc_fil, 0);
+
+	float zLimit=15;//高度限制
+	double X_err,Y_err,Z_err;
+	static bool down_or_land=false;	//有GPS则下降2m定点，无则慢慢降落
+	static bool isworking=false;	//电子围栏是否工作
+	float sinY = sinf(CtrlFbck.Ang[2]);
+	float cosY = cosf(CtrlFbck.Ang[2]);
+//	if(CtrlFbck.Z[0] < CtrlLpIO.Z_pos0-zLimit){
+//		  CtrlLpIO.Ang_command[0] = 0.0f;      //滚转角度输入0
+//		  CtrlLpIO.Ang_command[1] = 0.0f;      //俯仰角度输入0
+//		  CtrlLpIO.AngVel_command[2] =0.0f;
+//		  isexceedLimit=true;
+//		  In_Loop_Step2();
+//	}
+//	else isexceedLimit=false;
+	if(CtrlFbck.Z[0] < CtrlLpIO.Z_pos0-zLimit && isworking==false){
+		isworking=true;
+		CtrlLpIO.Ang_command[2] = CtrlFbck.Ang[2];//锁航向
+		if(isGpsNormal){
+			CtrlLpIO.Pos_command[0] = CtrlFbck.X[0];
+			CtrlLpIO.Pos_command[1] = CtrlFbck.Y[0];
+			CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0-zLimit+2.0;
+			down_or_land=true;
+		}
+		else down_or_land=false;
 	}
-	else isexceedLimit=false;
+	if(isworking && down_or_land){
+		X_err = CtrlLpIO.Pos_command[0] - CtrlFbck.X[0];
+		Y_err = CtrlLpIO.Pos_command[1] - CtrlFbck.Y[0];
+		Z_err = CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0];
+		CtrlLpIO.Pos_err[0] = (X_err* cosY + Y_err*sinY);
+		CtrlLpIO.Pos_err[1] = (X_err*-sinY + Y_err*cosY);
+		CtrlLpIO.Pos_err[2] = Z_err;
+		CtrlLpIO.Vel_command[0] = pidX->PID_Controller(CtrlLpIO.Pos_err[0],CtrlDt);
+		CtrlLpIO.Vel_command[1] = pidY->PID_Controller(CtrlLpIO.Pos_err[1],CtrlDt);
+		CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
+		CtrlLpIO.Vel_command[0] = fConstrain(CtrlLpIO.Vel_command[0],-5,5);
+		CtrlLpIO.Vel_command[1] = fConstrain(CtrlLpIO.Vel_command[1],-1,1);
+		CtrlLpIO.Vel_command[2] = fConstrain(CtrlLpIO.Vel_command[2],-1,0.5);
+
+		Out_Loop_Step2();
+		In_Loop_Step2();
+
+		static int cnt = 0;
+		if(abs(CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0])<0.03){
+			if(++cnt>200) isworking=false;
+		}
+	}
+	else if(isworking && !down_or_land){
+	  CtrlLpIO.Ang_command[0] = 0.0f;      //滚转角度输入0
+	  CtrlLpIO.Ang_command[1] = 0.0f;      //俯仰角度输入0
+	  CtrlLpIO.AngVel_command[2] =0.0f;
+	  isexceedLimit=true;
+	  In_Loop_Step2();
+
+	  if((acc_fil.acc_filter[2]+OneG) <= GE_ACC){
+		  CtrlIO.FlightStatus = GE;
+		  isexceedLimit=false;
+		  isworking=false;
+	  }
+	}
 }
 
 void CONTROL::add_differentiation(){
@@ -757,7 +810,7 @@ void CONTROL::OneKeyTakeOff(void)
 	{
 		static int num = 0;
 		num++;
-		if( num > 80 ){
+		if( num > 50 ){
 			num = 0;
 			CtrlIO.FlightStatus = TAKEOFF;
 		}
@@ -1311,7 +1364,7 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 				RL_cnt++;
 				CtrlLpIO.enable_Grab_flag = false;
 			}
-			if(RL_cnt>500){
+			if(RL_cnt>1000){
 				CtrlIO.FlightStatus = RELANDING;
 				RL_cnt = 0;
 			}
@@ -1323,7 +1376,7 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 			CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
 
 			static int L_cnt = 0;
-			if(abs(CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0])<0.02){
+			if(abs(CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0])<0.03){
 				if(++L_cnt>200){
 					CtrlIO.FlightStatus = LANDING;
 					L_cnt = 0;
@@ -1802,7 +1855,8 @@ void CONTROL::Out_Loop_Z_Pre2()
 	float  GE2=GE_ACC;
 	//----------------------检测打杆与否--------------------------------------
 	if      (CtrlIO.input[3]>1630 ) Z_command_flag = 1;//遥控器在上部，上升
-	else if (CtrlIO.input[3]<1370 ) Z_command_flag = 2;//遥控器在下部，下降
+	else if (CtrlIO.input[3]<1370 && CtrlIO.input[3]>1200) Z_command_flag = 2;//遥控器在下部，缓慢下降
+	else if (CtrlIO.input[3]<1200 ) Z_command_flag = 4;//遥控器在下部，快速下降
 	else                            Z_command_flag = 3;//遥控器在中间，悬停
 
 	//-----------------------模式切换-----------------------------------------
@@ -1819,7 +1873,7 @@ void CONTROL::Out_Loop_Z_Pre2()
 	if (CtrlLpIO.Z_phase!=1 && Z_command_flag!=3 && CtrlIO.FlightStatus == AIR)
 	{
 		CtrlLpIO.Z_phase = 1;
-		if (Z_command_flag==2)
+		if (Z_command_flag==2 || Z_command_flag==4)
 		{
 			CtrlLpIO.alt_landing_cnt.CNT  = 0;
 		    CtrlLpIO.landing_acc_mode = true;
@@ -1872,10 +1926,15 @@ void CONTROL::Out_Loop_Z_Pre2()
         break;
 	case 1:
 		if (Z_command_flag==2)
-			{
-			   CtrlLpIO.Vel_command[2] = 0.5f;
-			   CtrlLpIO.landing_acc_mode = TarHit(&CtrlLpIO.alt_landing_cnt,Vel_tol,CtrlLpIO.Vel_err[2]);
-			}
+		{
+		   CtrlLpIO.Vel_command[2] = 0.25f;
+		   CtrlLpIO.landing_acc_mode = TarHit(&CtrlLpIO.alt_landing_cnt,Vel_tol,CtrlLpIO.Vel_err[2]);
+		}
+		else if (Z_command_flag==4)
+		{
+		   CtrlLpIO.Vel_command[2] = 0.5f;
+		   CtrlLpIO.landing_acc_mode = TarHit(&CtrlLpIO.alt_landing_cnt,Vel_tol,CtrlLpIO.Vel_err[2]);
+		}
 		else if (Z_command_flag==1)
 		{
 			CtrlLpIO.Vel_command[2] = -1.0f;

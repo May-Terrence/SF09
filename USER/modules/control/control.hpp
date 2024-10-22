@@ -57,8 +57,8 @@ using namespace Eigen;
 //--------------------模型--------------------
 #ifdef MF09II02
 #define HOVER_SPEED 1225.0f//
-#define GE_SPEED   0.1f;
-#define GE_ACC     -0.3f;
+#define GE_SPEED   0.1f
+#define GE_ACC     -0.3f
 #define HOVER_PWM 1725//细桨1650 //
 #define IDLING_PWM 1600
 #define DRIFT_PWM HOVER_PWM-20//细桨1630
@@ -67,9 +67,9 @@ using namespace Eigen;
 
 #ifdef MF09II01
 #define HOVER_SPEED 1225.0f//
-#define GE_SPEED   0.1f;
-#define GE_ACC     -0.3f;
-#define HOVER_PWM 1650//细桨1650 //宽桨1545
+#define GE_SPEED   0.1f
+#define GE_ACC     -0.3f
+#define HOVER_PWM 1765//细桨1650 //宽桨1545
 #define IDLING_PWM 1450
 #define DRIFT_PWM 1630//细桨1630 //宽桨1525
 #define GROSSMASS 1.85f//2.1f
@@ -388,7 +388,7 @@ public:
 	Data_3D<float> position;
 	bool isGpsNormal=true;
 	bool isexceedLimit=false;
-
+	bool isReady{true};
 
 	float Z_laser_err{0};
 	float Z_err_inter{0};

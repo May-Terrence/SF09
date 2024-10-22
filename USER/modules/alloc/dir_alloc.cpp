@@ -288,10 +288,10 @@ void DIR_ALLOC::two_dir_alloc_mch(double v_T[3], double v_D[3], double u[4])
 
 	for(int i=0;i<3;i++)
 	{
-		v[i] = v_T[i] + v_D[i];
-		v_Tf[i] = (float)v_T[i];
-		v_Df[i] = (float)v_D[i];
-		vf[i] = v_Tf[i] + v_Df[i];
+		v[i] = v_T[i] + v_D[i];		//总舵量
+		v_Tf[i] = (float)v_T[i];	//扰动补偿副本
+		v_Df[i] = (float)v_D[i];	//动态力矩副本
+		vf[i] = v_Tf[i] + v_Df[i];	//总舵量副本
 
 	}
 	dir_alloc_mch(v, dir.umin, dir.umax, u_v);  // 先计算合力矩所需舵量

@@ -271,6 +271,7 @@ void CONTROL_STEP::Control_Step()
 				CtrlIO.FlightStatus = GROUND;
 				rcCommand.OneKeyTakeoff = false;
 				rcCommand.OneKeyLanding = false;
+				isReady = true;
 			}
 
 			Out_Loop_XY_Pre2();           //水平速度给定，判断定点模式
@@ -299,17 +300,17 @@ void CONTROL_STEP::Control_Step()
 //			  if(slam.Ready_Land)
 			  if(rcCommand.OneKeyLanding == true){
 				  if(rcCommand.Key[1]==2){
-					  static bool isReady=false;
-					  if(!isReady){
+					  if(isReady){
 						  xQueuePeek(queueClaw, &claw_msg,0);
 						  CtrlLpIO.end_command[0] = CtrlLpIO.X_pos0 + claw_msg.Pos[0] - CtrlLpIO.X_claw_pos0;
-						  CtrlLpIO.end_command[0] = CtrlLpIO.Y_pos0 + claw_msg.Pos[1] - CtrlLpIO.Y_claw_pos0;
+						  CtrlLpIO.end_command[1] = CtrlLpIO.Y_pos0 + claw_msg.Pos[1] - CtrlLpIO.Y_claw_pos0;
 						  CtrlLpIO.end_yaw = claw_msg.Yaw;
-						  isReady = true;
+						  isReady = false;
 					  }
 					  OneKeyLanding(CtrlLpIO.end_command[0],CtrlLpIO.end_command[1],true,true);
 				  }
-				  else OneKeyLanding(0,0,false,true);
+				  else
+					  OneKeyLanding(0,0,false,true);
 			  }
 
 //			  trackPath();
@@ -545,32 +546,13 @@ extern "C" void control_main(void *argument)
 
 		control_step.Control_Step();
 		control_step.Control_Step2();
+
+		if(cnt%500)
+			slam.Show_Msg_Transfer();
 		if(cnt%200)
 			control_step.PID_Para_Update();
-		if(cnt%4){
+		if(cnt%4)
 			control_step.Tranfer_Data_Updata();
-//			switch(slam.test_flag)
-//			{
-//			case 0:
-//				break;
-//			case 1:
-//				slam.Relative_Position_Transfer();
-//				slam.test_flag = 0;
-//				break;
-//			case 2:
-//				slam.Status_Transfer();
-//				slam.test_flag = 0;
-//				break;
-//			case 3:
-//				slam.Take_off_Request_Transfer();
-//				slam.test_flag = 0;
-//				break;
-//			case 4:
-//				slam.Land_Request_Transfer();
-//				slam.test_flag = 0;
-//				break;
-//			}
-		}
 		cnt++;
 
 		getTimer_us(&control_step.stopTimer);
