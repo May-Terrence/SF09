@@ -807,7 +807,7 @@ void CONTROL::OneKeyTakeOff(void)
 
 			CtrlLpIO.Pos_command[0] = CtrlLpIO.X_pos0;
 			CtrlLpIO.Pos_command[1] = CtrlLpIO.Y_pos0;
-			CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0 - 1.5f;//当前高度+3m作为高度给定
+			CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0 - 0.8f;//当前高度+3m作为高度给定
 			CtrlLpIO.Ang_command[2] = CtrlFbck.Ang[2];//锁航向
 
 			ini = true;
@@ -841,6 +841,13 @@ void CONTROL::OneKeyTakeOff(void)
 	Ctrltrack.POS_err = absf(CtrlLpIO.Pos_err[2]);
 	if ( Ctrltrack.POS_err <= CtrlLpIO.POS_thr && CtrlIO.FlightStatus == TAKEOFF )
 	{
+//		slam.status = Air;
+//		slam.Status_Transfer();
+//		if(slam.isCommunicating){
+//			CtrlIO.FlightStatus = AIR;
+//			ini = false;
+//			slam.isCommunicating = false;
+//		}
 		CtrlIO.FlightStatus = AIR;
 		rcCommand.OneKeyTakeoff = false;
 		rcCommand.TakeOffFinish = true;
@@ -877,7 +884,7 @@ void CONTROL::Auto_flypoint()
 		Ctrltrack.PTP_Status = PTP_hover; //悬停
 		CtrlLpIO.Pos_command[0] = CtrlLpIO.X_pos0;//CtrlFbck.X[0];
 		CtrlLpIO.Pos_command[1] = CtrlLpIO.Y_pos0;//CtrlFbck.Y[0];
-		CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0-1.5f;//CtrlFbck.Z[0];
+		CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0 - 0.8f;//CtrlFbck.Z[0];
 		CtrlLpIO.Ang_command[2] = CtrlFbck.Ang[2];
 		Ctrltrack.flypoint_start=true;
 	}
@@ -1227,7 +1234,7 @@ void CONTROL::Auto_flycircle()
 void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 {
 	xQueuePeek(queueRCCommand, &rcCommand, 0);
-	double X_err,Y_err,Z_err;
+	double X_err,Y_err,Z_err,XY_err;
 	float  Vel_tol=0.4;
 	static u16 count=0;
 	float  GE1=GE_SPEED;
@@ -1324,14 +1331,15 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 				count++;
 				Ctrltrack.brake_finish = true;
 				if(count>300){
-					if(Turn_Heading(CtrlLpIO.end_yaw)){
+//					if(Turn_Heading(CtrlLpIO.end_yaw)){
 						isComplete = true;
 						Ctrltrack.brake_finish=false;
 						CtrlIO.FlightStatus = LANDING;
 						count=0;
-					}
+//					}
 				}
 			}
+			else count = 0;
 		}
 		if(CtrlIO.FlightStatus == LANDING){
 //			CtrlLpIO.Vel_command[2] = 0.5;
@@ -1341,6 +1349,8 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 //				if(CtrlFbck.Z[1]<=GE1  && (acc_fil.acc_filter[2]+OneG)<=GE2){
 //					CtrlIO.FlightStatus = GE;
 //					rcCommand.OneKeyLanding = false;
+//					rcCommand.Key[0] = 0;
+//					CtrlIO.control_mode = 2;
 //				}
 //			}
 
@@ -1366,7 +1376,7 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 //				CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
 
 /*ESKF*/
-				CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0-0.15f;
+				CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0-0.14f;
 				Z_err = CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0];
 				CtrlLpIO.Pos_err[2] = Z_err;
 				CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
@@ -1387,10 +1397,18 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 			if(abs(CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0])<pid[15].Kp){
 				if(CtrlLpIO.X_err_estimate<pid[15].Ki && CtrlLpIO.Y_err_estimate<pid[15].Ki && CtrlLpIO.XY_err_estimate<pid[15].Ki){
 					CtrlLpIO.enable_Grab_flag = true;
-					if(++cnt>10)
+					if(++cnt>15)
 						claw.Close_Request_Tran();
 					if(claw.isClose){
 						if(++GE_cnt>200){
+//							slam.status = Ground;
+//							slam.Status_Transfer();
+//							if(slam.isCommunicating){
+//								CtrlIO.FlightStatus = GE;
+//								slam.isCommunicating = false;
+//								rcCommand.Key[0] = 0;
+//								CtrlIO.control_mode = 2;
+//							}
 							CtrlIO.FlightStatus = GE;
 							rcCommand.OneKeyLanding = false;
 						}
@@ -2424,14 +2442,14 @@ void CONTROL::Output_To_Motor()
   		CtrlLpIO.u1_Tilt[0] = 0.0f;
   	}
 
-	if(CtrlIO.rc_status == NORMAL || CtrlIO.rc_status == LOST) //已加入未接受到遥控器指令（有Gps）下的失控返航
-	{
+//	if(CtrlIO.rc_status == NORMAL || CtrlIO.rc_status == LOST) //已加入未接受到遥控器指令（有Gps）下的失控返航
+//	{
 		CtrlIO.mt_output[0] = (int)(sqrt((CtrlIO.output[3])/K_pwm))+1090;
-	}
-	else if (CtrlIO.rc_status==CLOSE)
-	{
-		CtrlIO.mt_output[0] = 1000;
-	}
+//	}
+//	else if (CtrlIO.rc_status==CLOSE)
+//	{
+//		CtrlIO.mt_output[0] = 1000;
+//	}
 	if(isexceedLimit)CtrlIO.mt_output[0] = (int)(sqrt((0.95*OneG)/K_pwm))+1090;
 	if(!isGpsNormal && CtrlIO.control_mode==4)
 	{

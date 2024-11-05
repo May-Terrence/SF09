@@ -1745,6 +1745,7 @@ bool TRAN::uart_Send_User(void)//航点
 	xQueuePeek(queueTargetBuffer,&target_buffer,0);
 	xQueuePeek(queueAccDatFil,&acc_filter,0);
 	xQueuePeek(queuelaserFlow,&laserFlow,0);
+	xQueuePeek(queueClaw, &claw_msg,0);
 
 	vs16 temp;
 	tran.TxDat[2] = 0xF1;
@@ -1806,27 +1807,35 @@ bool TRAN::uart_Send_User(void)//航点
 //	tran.TxDat[30] = BYTE1(temp);
 //	tran.TxDat[31] = BYTE0(temp);
 
-	temp = control_data.yaw_command[0]*R2D*100;			//user_data13	偏航角期望值
+	temp = control_data.FlightStatus*100;			//user_data13	偏航角期望值
 	tran.TxDat[28] = BYTE1(temp);
 	tran.TxDat[29] = BYTE0(temp);
 
-	temp = control_data.Ang[2]*R2D*100;					//user_data14	偏航角反馈值
+//	temp = claw_msg.Pos[0]*100;					//user_data14	偏航角反馈值
+//	tran.TxDat[30] = BYTE1(temp);
+//	tran.TxDat[31] = BYTE0(temp);
+//
+//	temp = claw_msg.Pos[1]*100;				//user_data15	飞行状态
+//	tran.TxDat[32] = BYTE1(temp);
+//	tran.TxDat[33] = BYTE0(temp);
+
+	temp = control_data.TranStatus*100;					//user_data14	偏航角反馈值
 	tran.TxDat[30] = BYTE1(temp);
 	tran.TxDat[31] = BYTE0(temp);
 
-	temp = control_data.FlightStatus*100;				//user_data15	飞行状态
+	temp = control_data.control_mode*100;				//user_data15	飞行状态
 	tran.TxDat[32] = BYTE1(temp);
 	tran.TxDat[33] = BYTE0(temp);
 
-	temp = control_data.end_command[0]*100;					//user_data19	X位置估计误差
+	temp = control_data.Pos_estimate[0]*100;					//user_data19	X位置估计误差
 	tran.TxDat[34] = BYTE1(temp);
 	tran.TxDat[35] = BYTE0(temp);
 
-	temp = control_data.end_command[1]*100;				//user_data20	Y位置估计误差
+	temp = control_data.Pos_estimate[1]*100;				//user_data20	Y位置估计误差
 	tran.TxDat[36] = BYTE1(temp);
 	tran.TxDat[37] = BYTE0(temp);
 
-	temp = control_data.end_yaw*100;						//user_data17
+	temp = control_data.mt_output[0];						//user_data17
 	tran.TxDat[38] = BYTE1(temp);
 	tran.TxDat[39] = BYTE0(temp);
 

@@ -56,11 +56,11 @@ public:
 
 	void SLAM_Init();
 	void Command_Receive(void);
-	void Relative_Position_Transfer(void);
-	void Show_Msg_Transfer(void);
-//	void Status_Transfer(void);
-//	void Take_off_Request_Transfer(void);
-//	void Land_Request_Transfer(void);
+	void Position_Transfer(void);
+//	void Show_Msg_Transfer(void);
+	void Status_Transfer(void);
+	void Take_off_Request_Transfer(void);
+	void Land_Request_Transfer(void);
 	bool uart_Send_Check(void);
 
 	uint16_t   RxDataSize;
@@ -97,24 +97,23 @@ private:
 #pragma pack(1)
 struct s_slam_tran
 {
-    float n;
+	float lng;
+	float lat;
+	float n;
     float e;
     float d;
-    float x;
-    float y;
-    float z;
-    float w;
+    float yaw;
     u8 quadrant;	//象限
 };
 #pragma pack()
 
-#pragma pack(1)
-struct s_slam_tran2car
-{
-	double lng;
-	double lat;
-};
-#pragma pack()
+//#pragma pack(1)
+//struct s_slam_tran2car
+//{
+//	float lng;
+//	float lat;
+//};
+//#pragma pack()
 
 extern SLAM slam;
 

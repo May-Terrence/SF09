@@ -81,7 +81,7 @@ void CONTROL_STEP::Control_Step()
 
 
 	//----------------控制模式---------------//
-	if (CtrlIO.rc_status!=LOST)
+	if (CtrlIO.rc_status == NORMAL)
 	{
 		if(CtrlIO.last_control_mode == 4 && isGpsNormal){ //失控后又可控
 			StatusClear();
@@ -131,16 +131,18 @@ void CONTROL_STEP::Control_Step()
 						CtrlLpIO.Y_claw_pos0 = claw_msg.Pos[1];
 						CtrlLpIO.Z_claw_pos0 = claw_msg.Pos[2];
 					}
+					CtrlLpIO.Pos_estimate[0] = CtrlFbck.X[0] + 0.62*CtrlFbck.X[1];// + 0.5*AX*0.62*0.62;//位置预测
+					CtrlLpIO.Pos_estimate[1] = CtrlFbck.Y[0] + 0.62*CtrlFbck.Y[1];
 
-					xQueuePeek(queuelaserFlow,&laserFlow,0);
-					CtrlLpIO.Z_diff_gps = CtrlFbck.Z[0] - CtrlLpIO.Z_pos0;
-					CtrlLpIO.Z_diff_laser = laserFlow.heightFil - CtrlLpIO.Z_laser_pos0;
+//					xQueuePeek(queuelaserFlow,&laserFlow,0);
+//					CtrlLpIO.Z_diff_gps = CtrlFbck.Z[0] - CtrlLpIO.Z_pos0;
+//					CtrlLpIO.Z_diff_laser = laserFlow.heightFil - CtrlLpIO.Z_laser_pos0;
+//
+//					Z_laser_err = (laserFlow.heightFil-CtrlLpIO.Z_laser_pos0)-(CtrlFbck.Z[0]-CtrlLpIO.Z_pos0+Z_err_cor);
+//					Z_err_cor += pidLaser->PID_Controller(Z_laser_err,CtrlDt);
+//					CtrlLpIO.Z_diff = CtrlFbck.Z[0] - CtrlLpIO.Z_pos0 + Z_err_cor;
 
-					Z_laser_err = (laserFlow.heightFil-CtrlLpIO.Z_laser_pos0)-(CtrlFbck.Z[0]-CtrlLpIO.Z_pos0+Z_err_cor);
-					Z_err_cor += pidLaser->PID_Controller(Z_laser_err,CtrlDt);
-					CtrlLpIO.Z_diff = CtrlFbck.Z[0] - CtrlLpIO.Z_pos0 + Z_err_cor;
-
-	// 				if(CtrlIO.last_control_mode != 3) 
+	// 				if(CtrlIO.last_control_mode != 3)
 	// 				{
 	// 					CtrlLpIO.Ang_command[2] = CtrlFbck.Ang[2];
 	// 					if(point_list[fly_point_overwrite.num].enable) //TODO 不同情况下的判断
@@ -207,9 +209,37 @@ void CONTROL_STEP::Control_Step()
 			default:break;
 		}
 	}
-	else
+	else if(CtrlIO.rc_status == LOST)
 	{
 		CtrlIO.control_mode = 4;	//失去遥控器控制
+	}
+
+	if(CtrlIO.rc_status == CLOSE && slam.Ready_Take_off){
+		CtrlIO.control_mode = 2;
+		rcCommand.Key[0]    = 2;
+		static int take_off_cnt = 0;
+
+		if(++take_off_cnt>600){
+			CtrlIO.control_mode = 3;
+			slam.Ready_Take_off = false;
+			slam.status = Taking_off;
+			take_off_cnt = 0;
+		}
+
+		if(CtrlIO.last_control_mode != 3){
+			xQueuePeek(queuelaserFlow,&laserFlow,0);
+			CtrlLpIO.X_pos0 = CtrlFbck.X[0];//仅第一次记录xy当前位置
+			CtrlLpIO.Y_pos0 = CtrlFbck.Y[0];
+			CtrlLpIO.Z_pos0 = CtrlFbck.Z[0];
+			CtrlLpIO.Yaw0   = CtrlFbck.Ang[2];
+			CtrlLpIO.Z_laser_pos0 = laserFlow.heightFil;
+
+			if(claw.isClose) claw.Open_Request_Tran();
+			xQueuePeek(queueClaw, &claw_msg,0);
+			CtrlLpIO.X_claw_pos0 = claw_msg.Pos[0];//仅第一次记录xy当前位置
+			CtrlLpIO.Y_claw_pos0 = claw_msg.Pos[1];
+			CtrlLpIO.Z_claw_pos0 = claw_msg.Pos[2];
+		}
 	}
 
 	static uint32_t lastTime = 0, gpsHaltCnt;
@@ -293,26 +323,40 @@ void CONTROL_STEP::Control_Step()
 //			  if(slam.Ready_Take_off && claw.isClose) claw.Open_Request_Tran();
 //			  if(slam.Ready_Take_off && claw.isOpen && !rcCommand.TakeOffFinish) OneKeyTakeOff();
 			  if(rcCommand.OneKeyTakeoff == true)  OneKeyTakeOff();
+			  if(slam.status == Taking_off && CtrlIO.FlightStatus != AIR) OneKeyTakeOff();
 			  if(CtrlIO.FlightStatus == AIR && rcCommand.OneKeyLanding == false) Auto_flypoint();
 //			  if(CtrlIO.FlightStatus == AIR && rcCommand.OneKeyLanding == false) Auto_flycircle();//飞圆，测试前请确保磁力计数据正常
 //			  if(rcCommand.OneKeyLanding == true)  OneKeyLanding(0,0,false,true);
-//			  if(slam.Ready_Land)
 			  if(rcCommand.OneKeyLanding == true){
 				  if(rcCommand.Key[1]==2){
 					  if(isReady){
 						  xQueuePeek(queueClaw, &claw_msg,0);
-						  if(claw.isUpdate && claw.noMove){
+//						  if(claw.isUpdate && claw.noMove){
 							  CtrlLpIO.enable_Grab_flag = true;
-							  CtrlLpIO.end_command[0] = CtrlLpIO.X_pos0 + claw_msg.Pos[0] - CtrlLpIO.X_claw_pos0;
-							  CtrlLpIO.end_command[1] = CtrlLpIO.Y_pos0 + claw_msg.Pos[1] - CtrlLpIO.Y_claw_pos0;
-							  CtrlLpIO.end_yaw = claw_msg.Yaw;
+							  CtrlLpIO.end_command[0] = CtrlLpIO.X_pos0 + 2.0f;//claw_msg.Pos[0] - CtrlLpIO.X_claw_pos0;
+							  CtrlLpIO.end_command[1] = CtrlLpIO.Y_pos0 + 2.0f;//Sclaw_msg.Pos[1] - CtrlLpIO.Y_claw_pos0;
+							  CtrlLpIO.end_yaw = CtrlLpIO.Yaw0;//claw_msg.Yaw;
 							  isReady = false;
-						  }
+//						  }
 					  }
 					  if(!isReady) OneKeyLanding(CtrlLpIO.end_command[0],CtrlLpIO.end_command[1],true,true);
 				  }
 				  else
 					  OneKeyLanding(0,0,false,true);
+			  }
+			  if(slam.Ready_Land && CtrlIO.FlightStatus != GE){
+//				  if(isReady){
+//					  xQueuePeek(queueClaw, &claw_msg,0);
+//					  if(claw.isUpdate && claw.noMove){
+//						  CtrlLpIO.enable_Grab_flag = true;
+//						  CtrlLpIO.end_command[0] = CtrlLpIO.X_pos0 + claw_msg.Pos[0] - CtrlLpIO.X_claw_pos0;
+//						  CtrlLpIO.end_command[1] = CtrlLpIO.Y_pos0 + claw_msg.Pos[1] - CtrlLpIO.Y_claw_pos0;
+//						  CtrlLpIO.end_yaw = claw_msg.Yaw;
+//						  isReady = false;
+//					  }
+//				  }
+//				  if(!isReady) OneKeyLanding(CtrlLpIO.end_command[0],CtrlLpIO.end_command[1],true,true);
+				  OneKeyLanding(0,0,false,true);
 			  }
 
 //			  trackPath();
@@ -503,6 +547,8 @@ void CONTROL_STEP::Tranfer_Data_Updata(void)
 
 	control_data.control_mode = CtrlIO.control_mode;
 	control_data.FlightStatus = CtrlIO.FlightStatus;
+	control_data.TranStatus   = slam.status;
+
 	control_data.XY_phase=CtrlLpIO.XY_phase;
 	control_data.Z_phase=CtrlLpIO.Z_phase;
 	control_data.XYZ_phase=CtrlLpIO.XYZ_phase;
@@ -520,9 +566,9 @@ void CONTROL_STEP::Tranfer_Data_Updata(void)
 	control_data.Y_pos0 = CtrlLpIO.Y_pos0;
 	control_data.Z_pos0 = CtrlLpIO.Z_pos0;
 
-	control_data.Z_diff_gps = CtrlLpIO.Z_diff_gps;
-	control_data.Z_diff_laser = CtrlLpIO.Z_diff_laser;
-	control_data.Z_diff = CtrlLpIO.Z_diff;
+//	control_data.Z_diff_gps = CtrlLpIO.Z_diff_gps;
+//	control_data.Z_diff_laser = CtrlLpIO.Z_diff_laser;
+//	control_data.Z_diff = CtrlLpIO.Z_diff;
 
 	control_data.end_command[0] = CtrlLpIO.end_command[0];
 	control_data.end_command[1] = CtrlLpIO.end_command[1];
@@ -549,10 +595,10 @@ extern "C" void control_main(void *argument)
 		control_step.Control_Step();
 		control_step.Control_Step2();
 
-		if(cnt%100)
-			slam.Show_Msg_Transfer();
 		if(cnt%200)
 			control_step.PID_Para_Update();
+//		if(cnt%10)
+//			slam.Position_Transfer();
 		if(cnt%4)
 			control_step.Tranfer_Data_Updata();
 		cnt++;

@@ -347,6 +347,7 @@ typedef struct
 	int last_control_mode;
 	int control_mode;
 	int FlightStatus;
+	int TranStatus;
 
 	int trajectory_status;//传递轨迹规划状态
 	int last_trajectory_status;
