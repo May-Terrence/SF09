@@ -495,10 +495,11 @@ void CONTROL::StatusClear()
 void CONTROL::virtualFence(){
 	xQueuePeek(queueAccDatFil, &acc_fil, 0);
 
-	float zLimit=15;//高度限制
-	double X_err,Y_err,Z_err;
-	static bool down_or_land=false;	//有GPS则下降2m定点，无则慢慢降落
+	static float zLimit=15.0;//高度限制
 	static bool isworking=false;	//电子围栏是否工作
+	static bool down_or_land=false;	//有GPS则下降2m定点，无则慢慢降落
+	double X_err,Y_err,Z_err;
+	static float x,y;
 	float sinY = sinf(CtrlFbck.Ang[2]);
 	float cosY = cosf(CtrlFbck.Ang[2]);
 //	if(CtrlFbck.Z[0] < CtrlLpIO.Z_pos0-zLimit){
@@ -509,18 +510,21 @@ void CONTROL::virtualFence(){
 //		  In_Loop_Step2();
 //	}
 //	else isexceedLimit=false;
-	if(CtrlFbck.Z[0] < CtrlLpIO.Z_pos0-zLimit && isworking==false){
-		isworking=true;
-		CtrlLpIO.Ang_command[2] = CtrlFbck.Ang[2];//锁航向
-		if(isGpsNormal){
-			CtrlLpIO.Pos_command[0] = CtrlFbck.X[0];
-			CtrlLpIO.Pos_command[1] = CtrlFbck.Y[0];
-			CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0-zLimit+2.0;
-			down_or_land=true;
-		}
+	if(CtrlFbck.Z[0] < CtrlLpIO.Z_pos0-zLimit){
+		if(isGpsNormal) down_or_land=true;
 		else down_or_land=false;
+		if(isworking==false){
+			x = CtrlFbck.X[0];
+			y = CtrlFbck.Y[0];
+		}
+		isworking=true;
 	}
 	if(isworking && down_or_land){
+		CtrlLpIO.Pos_command[0] = x;
+		CtrlLpIO.Pos_command[1] = y;
+		CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0-zLimit+2.0;
+		CtrlLpIO.Ang_command[2] = CtrlFbck.Ang[2];//锁航向
+
 		X_err = CtrlLpIO.Pos_command[0] - CtrlFbck.X[0];
 		Y_err = CtrlLpIO.Pos_command[1] - CtrlFbck.Y[0];
 		Z_err = CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0];
@@ -539,8 +543,12 @@ void CONTROL::virtualFence(){
 
 		static int cnt = 0;
 		if(abs(CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0])<0.03){
-			if(++cnt>200) isworking=false;
+			if(++cnt>200){
+				isworking=false;
+				cnt = 0;
+			}
 		}
+		else cnt = 0;
 	}
 	else if(isworking && !down_or_land){
 	  CtrlLpIO.Ang_command[0] = 0.0f;      //滚转角度输入0
@@ -1278,7 +1286,6 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 			if( Turn_Heading( Ctrltrack.azimuth ) )
 			{
 				CtrlIO.FlightStatus = RETURNING;
-				remove_differentiation();
 				CtrlLpIO.Pos_command[0] = X;
 				CtrlLpIO.Pos_command[1] = Y;
 			}
@@ -1316,11 +1323,13 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 			if (Ctrltrack.distance_XY<0.3f || Ctrltrack.brake_finish==true){
 				count++;
 				Ctrltrack.brake_finish = true;
-				if(count>100){
-					isComplete = true;
-					Ctrltrack.brake_finish=false;
-					CtrlIO.FlightStatus = LANDING;
-					count=0;
+				if(count>300){
+					if(Turn_Heading(CtrlLpIO.end_yaw)){
+						isComplete = true;
+						Ctrltrack.brake_finish=false;
+						CtrlIO.FlightStatus = LANDING;
+						count=0;
+					}
 				}
 			}
 		}
@@ -1334,9 +1343,6 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 //					rcCommand.OneKeyLanding = false;
 //				}
 //			}
-
-//			if(Turn_Heading(CtrlLpIO.end_yaw)){
-//			add_differentiation();
 
 /*激光融合ESKF*/
 //				xQueuePeek(queuelaserFlow,&laserFlow,0);
@@ -1364,7 +1370,6 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 				Z_err = CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0];
 				CtrlLpIO.Pos_err[2] = Z_err;
 				CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
-//			}
 
 			//NED系下
 			static int cnt = 0;

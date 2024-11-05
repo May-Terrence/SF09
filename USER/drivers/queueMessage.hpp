@@ -531,7 +531,7 @@ typedef struct
 typedef struct
 {
 	float body_Pos[3];//X,Y,Z
-	Quaternion<float> body_q;
+//	Quaternion<float> body_q;
 	Vector3f body_Ang;
 }SLAM_msg;
 

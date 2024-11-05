@@ -301,12 +301,15 @@ void CONTROL_STEP::Control_Step()
 				  if(rcCommand.Key[1]==2){
 					  if(isReady){
 						  xQueuePeek(queueClaw, &claw_msg,0);
-						  CtrlLpIO.end_command[0] = CtrlLpIO.X_pos0 + claw_msg.Pos[0] - CtrlLpIO.X_claw_pos0;
-						  CtrlLpIO.end_command[1] = CtrlLpIO.Y_pos0 + claw_msg.Pos[1] - CtrlLpIO.Y_claw_pos0;
-						  CtrlLpIO.end_yaw = claw_msg.Yaw;
-						  isReady = false;
+						  if(claw.isUpdate && claw.noMove){
+							  CtrlLpIO.enable_Grab_flag = true;
+							  CtrlLpIO.end_command[0] = CtrlLpIO.X_pos0 + claw_msg.Pos[0] - CtrlLpIO.X_claw_pos0;
+							  CtrlLpIO.end_command[1] = CtrlLpIO.Y_pos0 + claw_msg.Pos[1] - CtrlLpIO.Y_claw_pos0;
+							  CtrlLpIO.end_yaw = claw_msg.Yaw;
+							  isReady = false;
+						  }
 					  }
-					  OneKeyLanding(CtrlLpIO.end_command[0],CtrlLpIO.end_command[1],true,true);
+					  if(!isReady) OneKeyLanding(CtrlLpIO.end_command[0],CtrlLpIO.end_command[1],true,true);
 				  }
 				  else
 					  OneKeyLanding(0,0,false,true);

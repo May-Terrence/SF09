@@ -153,8 +153,21 @@ void CLAW::claw_Update(void)
 		claw_msg.star   = ((claw_msg_update *)(&RxDat[4]))->satellites_used;
 		claw_msg.model  = ((claw_msg_update *)(&RxDat[4]))->work_mode;
 
-		isUpdate = true;
-		xQueueOverwrite(queueClaw, &claw_msg);
+		if(claw_msg.model == 4){
+			static int cnt = 0;
+			isUpdate = true;
+			if(sqrt(SQR(claw_msg.Pos[0] - last_Pos[0])+SQR(claw_msg.Pos[1] - last_Pos[1]))<0.02){
+				if(++cnt>3) noMove = true;
+			}
+			else{
+				cnt = 0;
+				noMove = false;
+			}
+			last_Pos[0] = claw_msg.Pos[0];
+			last_Pos[1] = claw_msg.Pos[1];
+			xQueueOverwrite(queueClaw, &claw_msg);
+		}
+		else isUpdate = false;
 	}
 	else if(RxDat[2] == 0x01){
 		switch(RxDat[4])

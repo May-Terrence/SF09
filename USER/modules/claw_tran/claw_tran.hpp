@@ -58,7 +58,9 @@ public:
 	bool isClose{true};
 	bool isConnect{false};
 	bool isUpdate{false};
+	bool noMove{false};
 	CLAW_msg claw_msg;
+	float last_Pos[2]{0};
 
 private:
 	USART_TypeDef * huart;
