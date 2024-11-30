@@ -144,32 +144,36 @@ void SLAM::SLAM_Init(void)
 void SLAM::Command_Receive(void)
 {
 	if(slam.RxRawDat[1] == 0x02){
-		for(int i=0; i<2; i++)
-		{
-			slam_msg.body_Pos[i] = ((RxDat[i*4+6]<<24)|(RxDat[i*4+5]<<16)|(RxDat[i*4+4]<<8)|(RxDat[i*4+3]));
-		}
-		slam_msg.body_Ang[2] = ((RxDat[14]<<24)|(RxDat[13]<<16)|(RxDat[12]<<8)|(RxDat[11]));
+//		for(int i=0; i<2; i++)
+//		{
+//			slam_msg.body_Pos[i] = ((RxDat[i*4+6]<<24)|(RxDat[i*4+5]<<16)|(RxDat[i*4+4]<<8)|(RxDat[i*4+3]));
+//		}
+//		slam_msg.body_Ang[2] = ((RxDat[14]<<24)|(RxDat[13]<<16)|(RxDat[12]<<8)|(RxDat[11]));
 
-		float sinY = sinf(slam_msg.body_Ang[2]);
-		float cosY = cosf(slam_msg.body_Ang[2]);
-		float body_XH = (slam_msg.body_Pos[0]* cosY + slam_msg.body_Pos[1]*sinY);
-		float body_YH = (slam_msg.body_Pos[0]*-sinY + slam_msg.body_Pos[1]*cosY);
-		switch(RxDat[15]){
-		case 1:
-			body_YH = (slam_msg.body_Pos[0]*-sinY + slam_msg.body_Pos[1]*cosY) - CORRECTION_DISTANCE;
-			break;
-		case 2:
-			body_XH = (slam_msg.body_Pos[0]* cosY + slam_msg.body_Pos[1]*sinY) - CORRECTION_DISTANCE;
-			break;
-		case 3:
-			body_YH = (slam_msg.body_Pos[0]*-sinY + slam_msg.body_Pos[1]*cosY) + CORRECTION_DISTANCE;
-			break;
-		case 4:
-			body_XH = (slam_msg.body_Pos[0]* cosY + slam_msg.body_Pos[1]*sinY) + CORRECTION_DISTANCE;
-			break;
-		}
-		slam_msg.body_Pos[0] = (body_XH* cosY - body_YH*sinY);
-		slam_msg.body_Pos[1] = (body_XH* sinY + body_YH*cosY);
+		slam_msg.body_Pos[0] = ((s_slam_recieve *)(&RxDat[3]))->posX;
+		slam_msg.body_Pos[1] = ((s_slam_recieve *)(&RxDat[3]))->posY;
+		slam_msg.body_Ang[2] = ((s_slam_recieve *)(&RxDat[3]))->Ang;
+		u8 q = ((s_slam_recieve *)(&RxDat[3]))->quadrant;
+//		float sinY = sinf(slam_msg.body_Ang[2]);
+//		float cosY = cosf(slam_msg.body_Ang[2]);
+//		float body_XH = (slam_msg.body_Pos[0]* cosY + slam_msg.body_Pos[1]*sinY);
+//		float body_YH = (slam_msg.body_Pos[0]*-sinY + slam_msg.body_Pos[1]*cosY);
+//		switch(q){
+//		case 1:
+//			body_YH = (slam_msg.body_Pos[0]*-sinY + slam_msg.body_Pos[1]*cosY) - CORRECTION_DISTANCE;
+//			break;
+//		case 2:
+//			body_XH = (slam_msg.body_Pos[0]* cosY + slam_msg.body_Pos[1]*sinY) - CORRECTION_DISTANCE;
+//			break;
+//		case 3:
+//			body_YH = (slam_msg.body_Pos[0]*-sinY + slam_msg.body_Pos[1]*cosY) + CORRECTION_DISTANCE;
+//			break;
+//		case 4:
+//			body_XH = (slam_msg.body_Pos[0]* cosY + slam_msg.body_Pos[1]*sinY) + CORRECTION_DISTANCE;
+//			break;
+//		}
+//		slam_msg.body_Pos[0] = (body_XH* cosY - body_YH*sinY);
+//		slam_msg.body_Pos[1] = (body_XH* sinY + body_YH*cosY);
 		xQueueOverwrite(queueSlam, &slam_msg);
 		target = true;
 	}
@@ -223,9 +227,6 @@ void SLAM::Position_Transfer(void)
 	slam_tran->d = eskf.Pos[2];
 	slam_tran->yaw = ahrsEuler.Ang[2];
 	slam_tran->quadrant = 0;
-
-	slam.TxDat[len+3] = 0x00;
-	if(target) slam.TxDat[len+3] = 0x01;
 
 	USART1_Send_DMA((u8 *)slam.TxDat, len+4);
 }

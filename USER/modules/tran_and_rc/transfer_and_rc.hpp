@@ -173,6 +173,7 @@ private:
 	trajectory_msg trajectoryData;
 	laserFlow_msg laserFlow;
 	CLAW_msg claw_msg;
+	SLAM_msg slam_msg;
 	battery_msg battery;
 	RCData rcPPM;
 	PID_msg pid;

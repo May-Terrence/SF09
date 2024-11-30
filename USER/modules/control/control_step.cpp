@@ -123,6 +123,7 @@ void CONTROL_STEP::Control_Step()
 						CtrlLpIO.Y_pos0 = CtrlFbck.Y[0];
 						CtrlLpIO.Z_pos0 = CtrlFbck.Z[0];
 						CtrlLpIO.Yaw0   = CtrlFbck.Ang[2];
+						CtrlLpIO.end_yaw= CtrlLpIO.Yaw0;
 						CtrlLpIO.Z_laser_pos0 = laserFlow.heightFil;
 
 						if(claw.isClose) claw.Open_Request_Tran();
@@ -232,6 +233,7 @@ void CONTROL_STEP::Control_Step()
 			CtrlLpIO.Y_pos0 = CtrlFbck.Y[0];
 			CtrlLpIO.Z_pos0 = CtrlFbck.Z[0];
 			CtrlLpIO.Yaw0   = CtrlFbck.Ang[2];
+			CtrlLpIO.end_yaw= CtrlLpIO.Yaw0;
 			CtrlLpIO.Z_laser_pos0 = laserFlow.heightFil;
 
 			if(claw.isClose) claw.Open_Request_Tran();
@@ -323,7 +325,7 @@ void CONTROL_STEP::Control_Step()
 //			  if(slam.Ready_Take_off && claw.isClose) claw.Open_Request_Tran();
 //			  if(slam.Ready_Take_off && claw.isOpen && !rcCommand.TakeOffFinish) OneKeyTakeOff();
 			  if(rcCommand.OneKeyTakeoff == true)  OneKeyTakeOff();
-			  if(slam.status == Taking_off && CtrlIO.FlightStatus != AIR) OneKeyTakeOff();
+			  if((slam.status == Taking_off || slam.status == Air) && CtrlIO.FlightStatus != AIR) OneKeyTakeOff();
 			  if(CtrlIO.FlightStatus == AIR && rcCommand.OneKeyLanding == false) Auto_flypoint();
 //			  if(CtrlIO.FlightStatus == AIR && rcCommand.OneKeyLanding == false) Auto_flycircle();//飞圆，测试前请确保磁力计数据正常
 //			  if(rcCommand.OneKeyLanding == true)  OneKeyLanding(0,0,false,true);
@@ -331,13 +333,14 @@ void CONTROL_STEP::Control_Step()
 				  if(rcCommand.Key[1]==2){
 					  if(isReady){
 						  xQueuePeek(queueClaw, &claw_msg,0);
-//						  if(claw.isUpdate && claw.noMove){
+						  if(claw.isUpdate && claw.noMove){
 							  CtrlLpIO.enable_Grab_flag = true;
-							  CtrlLpIO.end_command[0] = CtrlLpIO.X_pos0 + 2.0f;//claw_msg.Pos[0] - CtrlLpIO.X_claw_pos0;
-							  CtrlLpIO.end_command[1] = CtrlLpIO.Y_pos0 + 2.0f;//Sclaw_msg.Pos[1] - CtrlLpIO.Y_claw_pos0;
-							  CtrlLpIO.end_yaw = CtrlLpIO.Yaw0;//claw_msg.Yaw;
+							  CtrlLpIO.end_command[0] = CtrlLpIO.X_pos0 + claw_msg.Pos[0] - CtrlLpIO.X_claw_pos0;
+							  CtrlLpIO.end_command[1] = CtrlLpIO.Y_pos0 + claw_msg.Pos[1] - CtrlLpIO.Y_claw_pos0;
+							  CtrlLpIO.end_command[2] = CtrlLpIO.Z_pos0 + claw_msg.Pos[2] - CtrlLpIO.Z_claw_pos0;
+							  CtrlLpIO.end_yaw = claw_msg.Yaw*D2R;
 							  isReady = false;
-//						  }
+						  }
 					  }
 					  if(!isReady) OneKeyLanding(CtrlLpIO.end_command[0],CtrlLpIO.end_command[1],true,true);
 				  }
@@ -351,7 +354,8 @@ void CONTROL_STEP::Control_Step()
 //						  CtrlLpIO.enable_Grab_flag = true;
 //						  CtrlLpIO.end_command[0] = CtrlLpIO.X_pos0 + claw_msg.Pos[0] - CtrlLpIO.X_claw_pos0;
 //						  CtrlLpIO.end_command[1] = CtrlLpIO.Y_pos0 + claw_msg.Pos[1] - CtrlLpIO.Y_claw_pos0;
-//						  CtrlLpIO.end_yaw = claw_msg.Yaw;
+//						  CtrlLpIO.end_command[2] = CtrlLpIO.Z_pos0 + claw_msg.Pos[2] - CtrlLpIO.Z_claw_pos0;
+//						  CtrlLpIO.end_yaw = claw_msg.Yaw*D2R;
 //						  isReady = false;
 //					  }
 //				  }
@@ -370,6 +374,7 @@ void CONTROL_STEP::Control_Step()
 				CtrlLpIO.Ang_command[1] = 0.0f;
 			  }
 		      In_Loop_Step2();              //角度环
+		      if(CtrlIO.rc_status == CLOSE && slam.status != NONE) rcCommand.Key[0] = 2;
 
 		  break;
 		case 4://失控保护
@@ -547,7 +552,7 @@ void CONTROL_STEP::Tranfer_Data_Updata(void)
 
 	control_data.control_mode = CtrlIO.control_mode;
 	control_data.FlightStatus = CtrlIO.FlightStatus;
-	control_data.TranStatus   = slam.status;
+	control_data.TranStatus   = Ctrltrack.PTP_Status;
 
 	control_data.XY_phase=CtrlLpIO.XY_phase;
 	control_data.Z_phase=CtrlLpIO.Z_phase;
@@ -597,8 +602,8 @@ extern "C" void control_main(void *argument)
 
 		if(cnt%200)
 			control_step.PID_Para_Update();
-//		if(cnt%10)
-//			slam.Position_Transfer();
+		if(cnt%10)
+			slam.Position_Transfer();
 		if(cnt%4)
 			control_step.Tranfer_Data_Updata();
 		cnt++;

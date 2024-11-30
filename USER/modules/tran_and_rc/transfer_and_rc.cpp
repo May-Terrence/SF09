@@ -432,7 +432,7 @@ void TRAN::uart_Send_DMA_loop(void)
 //			if(uart_Send_Base_Station_Data(space,buffer,read_index))
 //				send_log = false;
 //		}
-//		uart_Send_MotorPWM();
+		uart_Send_MotorPWM();
 		break;
 	case 9:
 //		uart_Send_rcData();
@@ -1746,6 +1746,8 @@ bool TRAN::uart_Send_User(void)//航点
 	xQueuePeek(queueAccDatFil,&acc_filter,0);
 	xQueuePeek(queuelaserFlow,&laserFlow,0);
 	xQueuePeek(queueClaw, &claw_msg,0);
+	xQueuePeek(queueSlam, &slam_msg,0);
+	xQueuePeek(queueMotorData,&motor_msg, 0);
 
 	vs16 temp;
 	tran.TxDat[2] = 0xF1;
@@ -1811,13 +1813,17 @@ bool TRAN::uart_Send_User(void)//航点
 	tran.TxDat[28] = BYTE1(temp);
 	tran.TxDat[29] = BYTE0(temp);
 
-//	temp = claw_msg.Pos[0]*100;					//user_data14	偏航角反馈值
+//	temp = slam_msg.body_Pos[0]*100;					//user_data14	偏航角反馈值
 //	tran.TxDat[30] = BYTE1(temp);
 //	tran.TxDat[31] = BYTE0(temp);
 //
-//	temp = claw_msg.Pos[1]*100;				//user_data15	飞行状态
+//	temp = slam_msg.body_Pos[1]*100;				//user_data15	飞行状态
 //	tran.TxDat[32] = BYTE1(temp);
 //	tran.TxDat[33] = BYTE0(temp);
+
+//	temp = motor_msg.PWM_OBS[0];					//user_data14	偏航角反馈值
+//	tran.TxDat[30] = BYTE1(temp);
+//	tran.TxDat[31] = BYTE0(temp);
 
 	temp = control_data.TranStatus*100;					//user_data14	偏航角反馈值
 	tran.TxDat[30] = BYTE1(temp);
@@ -1827,41 +1833,49 @@ bool TRAN::uart_Send_User(void)//航点
 	tran.TxDat[32] = BYTE1(temp);
 	tran.TxDat[33] = BYTE0(temp);
 
-	temp = control_data.Pos_estimate[0]*100;					//user_data19	X位置估计误差
+//	temp = control_data.end_command[0]*100;					//user_data19	X位置估计误差
+//	tran.TxDat[34] = BYTE1(temp);
+//	tran.TxDat[35] = BYTE0(temp);
+//
+//	temp = control_data.end_command[1]*100;				//user_data20	Y位置估计误差
+//	tran.TxDat[36] = BYTE1(temp);
+//	tran.TxDat[37] = BYTE0(temp);
+
+	temp = gps.status*100;					//user_data19	X位置估计误差
 	tran.TxDat[34] = BYTE1(temp);
 	tran.TxDat[35] = BYTE0(temp);
 
-	temp = control_data.Pos_estimate[1]*100;				//user_data20	Y位置估计误差
+	temp = motor_msg.PWM_OBS[0];				//user_data20	Y位置估计误差
 	tran.TxDat[36] = BYTE1(temp);
 	tran.TxDat[37] = BYTE0(temp);
 
-	temp = control_data.mt_output[0];						//user_data17
+	temp = control_output_msg.mt_output[0];						//user_data17
 	tran.TxDat[38] = BYTE1(temp);
 	tran.TxDat[39] = BYTE0(temp);
 
 //	temp = control_data.Ang[0]*R2D*100;						//user_data11	Euler角度反馈
-//	tran.TxDat[34] = BYTE1(temp);
-//	tran.TxDat[35] = BYTE0(temp);
+//	tran.TxDat[46] = BYTE1(temp);
+//	tran.TxDat[47] = BYTE0(temp);
 //
 //	temp = control_data.Ang[1]*R2D*100;						//user_data12
-//	tran.TxDat[36] = BYTE1(temp);
-//	tran.TxDat[37] = BYTE0(temp);
+//	tran.TxDat[48] = BYTE1(temp);
+//	tran.TxDat[49] = BYTE0(temp);
 //
 //	temp = control_data.Ang[2]*R2D*100;						//user_data13
-//	tran.TxDat[38] = BYTE1(temp);
-//	tran.TxDat[39] = BYTE0(temp);
+//	tran.TxDat[50] = BYTE1(temp);
+//	tran.TxDat[51] = BYTE0(temp);
 //
 //	temp = control_data.roll_command[0]*R2D*100;			//user_data14	Euler角度指令
-//	tran.TxDat[28] = BYTE1(temp);
-//	tran.TxDat[29] = BYTE0(temp);
+//	tran.TxDat[40] = BYTE1(temp);
+//	tran.TxDat[41] = BYTE0(temp);
 //
 //	temp = control_data.pitch_command[0]*R2D*100;			//user_data15
-//	tran.TxDat[30] = BYTE1(temp);
-//	tran.TxDat[31] = BYTE0(temp);
+//	tran.TxDat[42] = BYTE1(temp);
+//	tran.TxDat[43] = BYTE0(temp);
 //
 //	temp = control_data.yaw_command[0]*R2D*100;				//user_data16
-//	tran.TxDat[32] = BYTE1(temp);
-//	tran.TxDat[33] = BYTE0(temp);
+//	tran.TxDat[44] = BYTE1(temp);
+//	tran.TxDat[45] = BYTE0(temp);
 
 //	temp = laserFlow.height0*100;						//user_data22	激光原始值
 //	tran.TxDat[46] = BYTE1(temp);

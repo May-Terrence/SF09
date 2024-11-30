@@ -60,8 +60,8 @@ using namespace Eigen;
 #define HOVER_SPEED 1225.0f//
 #define GE_SPEED   0.1f
 #define GE_ACC     -0.3f
-#define HOVER_PWM 1725//细桨1650 //
-#define IDLING_PWM 1600
+#define HOVER_PWM 1870//细桨1650 //
+#define IDLING_PWM 1650
 #define DRIFT_PWM HOVER_PWM-20//细桨1630
 #define GROSSMASS 1.85f//2.1f
 #endif
@@ -262,7 +262,7 @@ typedef struct
 	float X_err_estimate{0},Y_err_estimate{0},XY_err_estimate{0}; //估计误差
 	bool  enable_Grab_flag{false};
 
-	float end_command[2]{0};
+	float end_command[3]{0};
 	float end_yaw{0};
 }sLOOPIO;
 

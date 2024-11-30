@@ -107,6 +107,16 @@ struct s_slam_tran
 };
 #pragma pack()
 
+#pragma pack(1)
+struct s_slam_recieve
+{
+	float posX;
+    float posY;
+    float Ang;
+    u8 quadrant;	//象限
+};
+#pragma pack()
+
 //#pragma pack(1)
 //struct s_slam_tran2car
 //{

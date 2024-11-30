@@ -533,7 +533,7 @@ typedef struct
 {
 	float body_Pos[3];//X,Y,Z
 //	Quaternion<float> body_q;
-	Vector3f body_Ang;
+	float body_Ang[3];
 }SLAM_msg;
 
 #ifdef __cplusplus
