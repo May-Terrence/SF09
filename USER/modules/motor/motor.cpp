@@ -93,6 +93,11 @@ void MOTORMAG::motor_Init(void)
 			MagOff[2] =  9196;
 #endif
 
+#ifdef MF09II03
+			MagOff[0] = -8195;
+			MagOff[1] =  2370;
+			MagOff[2] =  11917;
+#endif
 
 	mag_update_time_us = 0;
 	mag.timestamp = mag_update_time_us;
@@ -127,7 +132,9 @@ MOTORMAG motormag(UART8,(char*) "MOTORMAG",(char*) "+Y-X+Z");//"-Y-X-Z"
 #ifdef MF09II01
 MOTORMAG motormag(UART8,(char*) "MOTORMAG",(char*) "-Y-X-Z");
 #endif
-
+#ifdef MF09II03
+MOTORMAG motormag(UART8,(char*) "MOTORMAG",(char*) "-Y-X-Z");
+#endif
 void UART8_IRQHandler(void)
 {
 	if(LL_USART_IsActiveFlag_IDLE(Motor_DMA_UART))

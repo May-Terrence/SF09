@@ -76,26 +76,39 @@ extern "C" {
 #define CS_LIMIT_MIN -340
 #define CS_LIMIT_MAX 340     //175对应20度(0.349rad)
 
-
 #define PWM_MID_0 1090
-
 
 #define PWM_MID_1 1517//1621//1573motor2
 #define PWM_MID_2 1500//1437//1581
 #define PWM_MID_3 1372//1420//1607motor4
 #define PWM_MID_4 1568//1615//1583
 
-
 #define PWM_MID_5 1540
 #define PWM_MID_6 1413
-
 
 #define PWM_MID_7 1466
 #define PWM_MID_8 1250
 #define PWM_MID_9 1453
 #endif
 
+#ifdef MF09II03
+#define CS_LIMIT_MIN -340
+#define CS_LIMIT_MAX 340     //175对应20度(0.349rad)
 
+#define PWM_MID_0 1090
+
+#define PWM_MID_1 1500
+#define PWM_MID_2 1585
+#define PWM_MID_3 1500
+#define PWM_MID_4 1515
+
+#define PWM_MID_5 1540
+#define PWM_MID_6 1413
+
+#define PWM_MID_7 1466
+#define PWM_MID_8 1250
+#define PWM_MID_9 1453
+#endif
 
 #define TRAN_TX_LEN		PWM_OUT_NUM*2
 #define TRAN_RX_LEN		11

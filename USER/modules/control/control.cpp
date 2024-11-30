@@ -2507,6 +2507,9 @@ void CONTROL::Output_To_Motor()
 #ifdef MF09II01
 		CtrlIO.mt_output[0] = (int)(sqrt((1.30*OneG)/K_pwm))+1090;
 #endif
+#ifdef MF09II03
+		CtrlIO.mt_output[0] = (int)(sqrt((1.30*OneG)/K_pwm))+1090;
+#endif
 	}
 	control_output.mt_output[0] = CtrlIO.mt_output[0];
 	control_output.cs_output[0] = CtrlIO.cs_output[0];
