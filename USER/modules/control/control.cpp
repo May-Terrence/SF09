@@ -189,7 +189,7 @@ void CONTROL::Control_Init()
 
 	//pidZRate
 	pidZRate->Kp = 1.4f;
-	pidZRate->Ki = 0.04f;
+	pidZRate->Ki = 0.05f;
 	pidZRate->Kd = 0.0f;
 	pidZRate->Kb = 0.0f;
 	pidZRate->eLimit = 20;
@@ -565,19 +565,33 @@ void CONTROL::virtualFence(){
 	}
 }
 
-void CONTROL::add_differentiation(){
+void CONTROL::land_pid(){
+	pid_msg.kp[0] = 0.32f;
+	pid_msg.kp[1] = 0.32f;
+	pid_msg.kp[3] = 5.8f;
+	pid_msg.kp[4] = 5.8f;
+	pid_msg.kp[6] = 1.4f;
+	pid_msg.kp[7] = 1.4f;
 	pid_msg.kd[6] = 0.2f;
 	pid_msg.kd[7] = 0.2f;
 	pid_msg.kd[9] = 0.05f;
 	pid_msg.kd[10] = 0.05f;
+	pid_msg.ki[11] = 0.02f;
 	xQueueOverwrite(queuePID,&pid_msg);
 }
 
-void CONTROL::remove_differentiation(){
+void CONTROL::remove_land_pid(){
+	pid_msg.kp[0] = 0.3f;
+	pid_msg.kp[1] = 0.3f;
+	pid_msg.kp[3] = 5.5f;
+	pid_msg.kp[4] = 5.5f;
+	pid_msg.kp[6] = 1.5f;
+	pid_msg.kp[7] = 1.5f;
 	pid_msg.kd[6] = 0.0f;
 	pid_msg.kd[7] = 0.0f;
 	pid_msg.kd[9] = 0.0f;
 	pid_msg.kd[10] = 0.0f;
+	pid_msg.ki[11] = 0.0f;
 	xQueueOverwrite(queuePID,&pid_msg);
 }
 
@@ -805,7 +819,7 @@ void CONTROL::OneKeyTakeOff(void)
 
 			CtrlLpIO.Pos_command[0] = CtrlLpIO.X_pos0;
 			CtrlLpIO.Pos_command[1] = CtrlLpIO.Y_pos0;
-			CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0 - 1.5f;//当前高度+3m作为高度给定
+			CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0 - 0.8f;//当前高度+3m作为高度给定
 			CtrlLpIO.Ang_command[2] = CtrlFbck.Ang[2];//锁航向
 
 			ini = true;
@@ -886,7 +900,7 @@ void CONTROL::Auto_flypoint()
 		Ctrltrack.PTP_Status = PTP_hover; //悬停
 		CtrlLpIO.Pos_command[0] = CtrlLpIO.X_pos0;//CtrlFbck.X[0];
 		CtrlLpIO.Pos_command[1] = CtrlLpIO.Y_pos0;//CtrlFbck.Y[0];
-		CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0 - 1.5f;//CtrlFbck.Z[0];
+		CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0 - 0.8f;//CtrlFbck.Z[0];
 		CtrlLpIO.Ang_command[2] = CtrlFbck.Ang[2];
 		Ctrltrack.flypoint_start=true;
 	}
@@ -917,7 +931,7 @@ void CONTROL::Auto_flypoint()
 	switch(Ctrltrack.PTP_Status)
 	{
 	case PTP_hover://定点
-//		add_differentiation();
+//		land_pid();
 		CtrlLpIO.Vel_command[0] = fConstrain(CtrlLpIO.Vel_command[0],-1,1);
 		CtrlLpIO.Vel_command[1] = fConstrain(CtrlLpIO.Vel_command[1],-1,1);
 		if(point_list[num].enable ==1 && Ctrltrack.flypoint_start == true){
@@ -1008,6 +1022,7 @@ void CONTROL::Auto_flypoint()
 			count=0;
 			num++;
 		}
+		if(num == 1) slam.Land_Request_Transfer();
         break;
 	case NonPTP:
 		break;
@@ -1041,6 +1056,7 @@ void CONTROL::Auto_flypoint()
 			staytime = 2.0;
 			Ctrltrack.PTP_Status = PTP_TurnHead;
 			CtrlLpIO.brake_mode = true;
+			slam.Land_Request_Transfer();
 		}
 		break;
 	default:break;
@@ -1304,6 +1320,7 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 			}
 		}
 		if(CtrlIO.FlightStatus != AIR){
+			isComplete = true;
 			CtrlLpIO.alt_landing_cnt.CNT  = 0;
 			CtrlLpIO.landing_acc_mode = true;
 			CtrlLpIO.Ang_command[2] = CtrlFbck.Ang[2];//锁航向
@@ -1316,6 +1333,8 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 			CtrlLpIO.Acc_command[1] = 0.0f;
 			CtrlLpIO.Acc_command[2] = 0.0f;
 			return_vel = fConstrain(std::ceil((end-cur).norm()/15),1,5);
+//			return_vel = 1.0f;
+			if(CtrlIO.rc_status == CLOSE) slam.status = Landing;
 		}
 	}
 	X_err = CtrlLpIO.Pos_command[0] - CtrlFbck.X[0];
@@ -1337,11 +1356,11 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 				Ctrltrack.brake_finish = true;
 				CtrlLpIO.Acc_command[0] = 0;
 				CtrlLpIO.Jerk_command[0]= 0;
-				if(Turn_Heading(CtrlLpIO.end_yaw) && Ctrltrack.distance_XY<0.15f){
+				if(Turn_Heading(CtrlLpIO.end_yaw) && Ctrltrack.distance_XY<0.1f){
 					isComplete = true;
 					Ctrltrack.brake_finish=false;
 					CtrlIO.FlightStatus = LANDING;
-					add_differentiation();
+					land_pid();
 					count=0;
 				}
 //				if(Ctrltrack.distance_XY<0.15f){
@@ -1350,7 +1369,7 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 //							isComplete = true;
 //							Ctrltrack.brake_finish=false;
 //							CtrlIO.FlightStatus = LANDING;
-//							add_differentiation();
+//							land_pid();
 //							count=0;
 //						}
 //					}
@@ -1359,24 +1378,31 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 			}
 		}
 		if(CtrlIO.FlightStatus == LANDING){
-			CtrlLpIO.Vel_command[2] = 0.5;
-			CtrlLpIO.Vel_command[2] = fConstrain(CtrlLpIO.Vel_command[2],-1,0.5);
-			CtrlLpIO.landing_acc_mode = TarHit(&CtrlLpIO.alt_landing_cnt,Vel_tol,CtrlLpIO.Vel_err[2]);
-			if(CtrlLpIO.landing_acc_mode == false){
-				if(CtrlFbck.Z[1]<=GE1  && (acc_fil.acc_filter[2]+OneG)<=GE2){
-					slam.status = Ground;
-					slam.Status_Transfer();
-					if(slam.isCommunicating){
-						CtrlIO.FlightStatus = GE;
-						slam.isCommunicating = false;
-						slam.status = NONE;
-						rcCommand.Key[0] = 0;
-						CtrlIO.control_mode = 2;
-					}
-//					CtrlIO.FlightStatus = GE;
-//					rcCommand.OneKeyLanding = false;
-				}
-			}
+//			CtrlLpIO.Vel_command[2] = 0.5;
+//			CtrlLpIO.Vel_command[2] = fConstrain(CtrlLpIO.Vel_command[2],-1,0.5);
+//			CtrlLpIO.landing_acc_mode = TarHit(&CtrlLpIO.alt_landing_cnt,Vel_tol,CtrlLpIO.Vel_err[2]);
+//			if(CtrlLpIO.landing_acc_mode == false){
+//				if(CtrlFbck.Z[1]<=GE1  && (acc_fil.acc_filter[2]+OneG)<=GE2){
+//					if(CtrlIO.rc_status == CLOSE){
+//						slam.status = Ground;
+//						slam.Status_Transfer();
+//						if(slam.isCommunicating){
+//							CtrlIO.FlightStatus = GE;
+//							slam.Ready_Land = false;
+//							slam.isCommunicating = false;
+//							slam.status = NONE;
+//							rcCommand.Key[0] = 0;
+//							CtrlIO.control_mode = 2;
+//							remove_land_pid();
+//						}
+//					}
+//					else{
+//						CtrlIO.FlightStatus = GE;
+//						rcCommand.OneKeyLanding = false;
+//						remove_land_pid();
+//					}
+//				}
+//			}
 
 /*激光融合ESKF*/
 //				xQueuePeek(queuelaserFlow,&laserFlow,0);
@@ -1400,65 +1426,64 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 //				CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
 
 /*ESKF*/
-//				CtrlLpIO.Pos_command[2] = CtrlLpIO.end_command[2]-0.11f;
-//				Z_err = CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0];
-//				CtrlLpIO.Pos_err[2] = Z_err;
-//				CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
-//
-//			//NED系下
-//			static int cnt = 0;
-//			static int GE_cnt = 0;
-//			static int RL_cnt = 0;
-////			float ax = acc_fil.acc_filter[0];
-////			float ay = acc_fil.acc_filter[1];
-////			float AX = cos(CtrlFbck.Ang[1])*ax + sin(CtrlFbck.Ang[0])*sin(CtrlFbck.Ang[1])*ay;//机体系到地球系的旋转矩阵只取前两列
-////			float AY = cos(CtrlFbck.Ang[0])*ay;
-//			CtrlLpIO.Pos_estimate[0] = CtrlFbck.X[0] + 0.5*CtrlFbck.X[1];// + 0.5*AX*0.62*0.62;//位置预测
-//			CtrlLpIO.Pos_estimate[1] = CtrlFbck.Y[0] + 0.5*CtrlFbck.Y[1];// + 0.5*AY*0.62*0.62;
-//			CtrlLpIO.X_err_estimate = abs(CtrlLpIO.Pos_command[0] - CtrlLpIO.Pos_estimate[0]);
-//			CtrlLpIO.Y_err_estimate = abs(CtrlLpIO.Pos_command[1] - CtrlLpIO.Pos_estimate[1]);
-//			CtrlLpIO.XY_err_estimate = sqrt(SQR(CtrlLpIO.X_err_estimate)+SQR(CtrlLpIO.Y_err_estimate));
-//			if(abs(CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0])<pid[15].Kp){
-//				if(CtrlLpIO.X_err_estimate<pid[15].Ki && CtrlLpIO.Y_err_estimate<pid[15].Ki && CtrlLpIO.XY_err_estimate<pid[15].Ki){
-//					CtrlLpIO.enable_Grab_flag = true;
-//					if(++cnt>10)
-//						claw.Close_Request_Tran();
-//					if(claw.isClose){
-//						if(++GE_cnt>60){
-//							if(CtrlIO.rc_status == CLOSE){
-//								slam.status = Ground;
-//								slam.Status_Transfer();
-//								if(slam.isCommunicating){
-//									CtrlIO.FlightStatus = GE;
-//									slam.isCommunicating = false;
-//									rcCommand.Key[0] = 0;
-//									CtrlIO.control_mode = 2;
-//									remove_differentiation();
-//								}
-//							}
-//							else{
-//								CtrlIO.FlightStatus = GE;
-//								rcCommand.OneKeyLanding = false;
-//								remove_differentiation();
-//							}
-//						}
-//					}
-//				}
-//				else{
-//					cnt = 0;
-//					RL_cnt++;
-//					CtrlLpIO.enable_Grab_flag = false;
-//				}
-//			}
-//			else{
-//				cnt =0;
-//				RL_cnt++;
-//				CtrlLpIO.enable_Grab_flag = false;
-//			}
-//			if(RL_cnt>1000){
-//				CtrlIO.FlightStatus = RELANDING;
-//				RL_cnt = 0;
-//			}
+				CtrlLpIO.Pos_command[2] = CtrlLpIO.end_command[2]-0.14f;
+				Z_err = CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0];
+				CtrlLpIO.Pos_err[2] = Z_err;
+				CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
+
+			//NED系下
+			static int cnt = 0;
+			static int GE_cnt = 0;
+			static int RL_cnt = 0;
+//			float ax = acc_fil.acc_filter[0];
+//			float ay = acc_fil.acc_filter[1];
+//			float AX = cos(CtrlFbck.Ang[1])*ax + sin(CtrlFbck.Ang[0])*sin(CtrlFbck.Ang[1])*ay;//机体系到地球系的旋转矩阵只取前两列
+//			float AY = cos(CtrlFbck.Ang[0])*ay;
+			CtrlLpIO.Pos_estimate[0] = CtrlFbck.X[0] + 0.5*CtrlFbck.X[1];// + 0.5*AX*0.62*0.62;//位置预测
+			CtrlLpIO.Pos_estimate[1] = CtrlFbck.Y[0] + 0.5*CtrlFbck.Y[1];// + 0.5*AY*0.62*0.62;
+			CtrlLpIO.X_err_estimate = abs(CtrlLpIO.Pos_command[0] - CtrlLpIO.Pos_estimate[0]);
+			CtrlLpIO.Y_err_estimate = abs(CtrlLpIO.Pos_command[1] - CtrlLpIO.Pos_estimate[1]);
+			CtrlLpIO.XY_err_estimate = sqrt(SQR(CtrlLpIO.X_err_estimate)+SQR(CtrlLpIO.Y_err_estimate));
+			if(abs(CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0])<pid[15].Kp && CtrlLpIO.XY_err_estimate<pid[15].Ki){
+				CtrlLpIO.enable_Grab_flag = true;
+				if(++cnt>15 && !claw.isClose){
+					claw.Close_Request_Tran();
+					RL_cnt = 0;
+				}
+			}
+			else{
+				cnt =0;
+				RL_cnt++;
+				CtrlLpIO.enable_Grab_flag = false;
+			}
+			if(claw.isClose){
+				if(++GE_cnt>60){
+					if(CtrlIO.rc_status == CLOSE){
+						slam.status = Ground;
+						slam.Status_Transfer();
+						if(slam.isCommunicating){
+							GE_cnt = 0;
+							CtrlIO.FlightStatus = GE;
+							slam.Ready_Land = false;
+							slam.isCommunicating = false;
+							slam.status = NONE;
+							rcCommand.Key[0] = 0;
+							CtrlIO.control_mode = 2;
+							remove_land_pid();
+						}
+					}
+					else{
+						GE_cnt = 0;
+						CtrlIO.FlightStatus = GE;
+						rcCommand.OneKeyLanding = false;
+						remove_land_pid();
+					}
+				}
+			}
+			if(RL_cnt>1500){
+				CtrlIO.FlightStatus = RELANDING;
+				RL_cnt = 0;
+			}
 		}
 		if(CtrlIO.FlightStatus == RELANDING){
 			Ctrltrack.distance_XY = (end-cur).norm();
@@ -1471,13 +1496,13 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 			static int L_cnt = 0;
 			if(abs(CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0])<0.03){
 				if(Ctrltrack.distance_XY<0.1f){
-					if(++L_cnt>200){
+					if(++L_cnt>150){
 						CtrlIO.FlightStatus = LANDING;
 						L_cnt = 0;
 					}
 				}
+				else L_cnt = 0;
 			}
-			else L_cnt = 0;
 		}
 	}
 	CtrlLpIO.Vel_command[0] = fConstrain(CtrlLpIO.Vel_command[0],-5,5);
@@ -2505,10 +2530,10 @@ void CONTROL::Output_To_Motor()
 		CtrlIO.mt_output[0] = (int)(sqrt((1.30*OneG)/K_pwm))+1090;
 #endif
 #ifdef MF09II01
-		CtrlIO.mt_output[0] = (int)(sqrt((1.30*OneG)/K_pwm))+1090;
+		CtrlIO.mt_output[0] = (int)(sqrt((1.10*OneG)/K_pwm))+1090;
 #endif
 #ifdef MF09II03
-		CtrlIO.mt_output[0] = (int)(sqrt((1.30*OneG)/K_pwm))+1090;
+		CtrlIO.mt_output[0] = (int)(sqrt((1.25*OneG)/K_pwm))+1090;
 #endif
 	}
 	control_output.mt_output[0] = CtrlIO.mt_output[0];

@@ -219,28 +219,29 @@ void CONTROL_STEP::Control_Step()
 		CtrlIO.control_mode = 2;
 		rcCommand.Key[0]    = 2;
 		static int take_off_cnt = 0;
+		if(claw.isClose) claw.Open_Request_Tran();
 
 		if(++take_off_cnt>600){
 			CtrlIO.control_mode = 3;
 			slam.Ready_Take_off = false;
 			slam.status = Taking_off;
 			take_off_cnt = 0;
-		}
+			StatusClear();
 
-		if(CtrlIO.last_control_mode != 3){
-			xQueuePeek(queuelaserFlow,&laserFlow,0);
-			CtrlLpIO.X_pos0 = CtrlFbck.X[0];//仅第一次记录xy当前位置
-			CtrlLpIO.Y_pos0 = CtrlFbck.Y[0];
-			CtrlLpIO.Z_pos0 = CtrlFbck.Z[0];
-			CtrlLpIO.Yaw0   = CtrlFbck.Ang[2];
-			CtrlLpIO.end_yaw= CtrlLpIO.Yaw0;
-			CtrlLpIO.Z_laser_pos0 = laserFlow.heightFil;
+			if(CtrlIO.last_control_mode != 3){
+				xQueuePeek(queuelaserFlow,&laserFlow,0);
+				CtrlLpIO.X_pos0 = CtrlFbck.X[0];//仅第一次记录xy当前位置
+				CtrlLpIO.Y_pos0 = CtrlFbck.Y[0];
+				CtrlLpIO.Z_pos0 = CtrlFbck.Z[0];
+				CtrlLpIO.Yaw0   = CtrlFbck.Ang[2];
+				CtrlLpIO.end_yaw= CtrlLpIO.Yaw0;
+				CtrlLpIO.Z_laser_pos0 = laserFlow.heightFil;
 
-			if(claw.isClose) claw.Open_Request_Tran();
-			xQueuePeek(queueClaw, &claw_msg,0);
-			CtrlLpIO.X_claw_pos0 = claw_msg.Pos[0];//仅第一次记录xy当前位置
-			CtrlLpIO.Y_claw_pos0 = claw_msg.Pos[1];
-			CtrlLpIO.Z_claw_pos0 = claw_msg.Pos[2];
+				xQueuePeek(queueClaw, &claw_msg,0);
+				CtrlLpIO.X_claw_pos0 = claw_msg.Pos[0];//仅第一次记录xy当前位置
+				CtrlLpIO.Y_claw_pos0 = claw_msg.Pos[1];
+				CtrlLpIO.Z_claw_pos0 = claw_msg.Pos[2];
+			}
 		}
 	}
 
@@ -324,7 +325,7 @@ void CONTROL_STEP::Control_Step()
 			//原模式三
 //			  if(slam.Ready_Take_off && claw.isClose) claw.Open_Request_Tran();
 //			  if(slam.Ready_Take_off && claw.isOpen && !rcCommand.TakeOffFinish) OneKeyTakeOff();
-			  if(rcCommand.OneKeyTakeoff == true)  OneKeyTakeOff();
+			  if(CtrlIO.rc_status == NORMAL && rcCommand.OneKeyTakeoff == true)  OneKeyTakeOff();
 			  if((slam.status == Taking_off || slam.status == Air) && CtrlIO.FlightStatus != AIR) OneKeyTakeOff();
 			  if(CtrlIO.FlightStatus == AIR && rcCommand.OneKeyLanding == false) Auto_flypoint();
 //			  if(CtrlIO.FlightStatus == AIR && rcCommand.OneKeyLanding == false) Auto_flycircle();//飞圆，测试前请确保磁力计数据正常
@@ -334,7 +335,6 @@ void CONTROL_STEP::Control_Step()
 					  if(isReady){
 						  xQueuePeek(queueClaw, &claw_msg,0);
 						  if(claw.isUpdate && claw.noMove){
-							  CtrlLpIO.enable_Grab_flag = true;
 							  CtrlLpIO.end_command[0] = CtrlLpIO.X_pos0 + claw_msg.Pos[0] - CtrlLpIO.X_claw_pos0;
 							  CtrlLpIO.end_command[1] = CtrlLpIO.Y_pos0 + claw_msg.Pos[1] - CtrlLpIO.Y_claw_pos0;
 							  CtrlLpIO.end_command[2] = CtrlLpIO.Z_pos0 + claw_msg.Pos[2] - CtrlLpIO.Z_claw_pos0;
@@ -351,9 +351,8 @@ void CONTROL_STEP::Control_Step()
 //				  if(isReady){
 //					  xQueuePeek(queueClaw, &claw_msg,0);
 //					  if(claw.isUpdate && claw.noMove){
-//						  CtrlLpIO.enable_Grab_flag = true;
-//						  CtrlLpIO.end_command[0] = CtrlLpIO.X_pos0 + claw_msg.Pos[0] - CtrlLpIO.X_claw_pos0;
-//						  CtrlLpIO.end_command[1] = CtrlLpIO.Y_pos0 + claw_msg.Pos[1] - CtrlLpIO.Y_claw_pos0;
+//						  CtrlLpIO.end_command[0] = CtrlFbck.X[0];//CtrlLpIO.X_pos0 + claw_msg.Pos[0] - CtrlLpIO.X_claw_pos0;
+//						  CtrlLpIO.end_command[1] = CtrlFbck.Y[0];//CtrlLpIO.Y_pos0 + claw_msg.Pos[1] - CtrlLpIO.Y_claw_pos0;
 //						  CtrlLpIO.end_command[2] = CtrlLpIO.Z_pos0 + claw_msg.Pos[2] - CtrlLpIO.Z_claw_pos0;
 //						  CtrlLpIO.end_yaw = claw_msg.Yaw*D2R;
 //						  isReady = false;
@@ -375,7 +374,7 @@ void CONTROL_STEP::Control_Step()
 			  }
 		      In_Loop_Step2();              //角度环
 		      if(CtrlIO.rc_status == CLOSE && slam.status != NONE) rcCommand.Key[0] = 2;
-
+		      if(CtrlIO.rc_status == CLOSE && rcCommand.OneKeyTakeoff == true) rcCommand.Key[0] = 0;
 		  break;
 		case 4://失控保护
 			if(!isGpsNormal){ //没有Gps信号则原地降落
@@ -579,6 +578,10 @@ void CONTROL_STEP::Tranfer_Data_Updata(void)
 	control_data.end_command[1] = CtrlLpIO.end_command[1];
 	control_data.end_yaw = CtrlLpIO.end_yaw;
 
+	control_data.isUniform = Ctrltrack.isUniform;
+	control_data.isBrake = Ctrltrack.isBrake;
+	control_data.Vel_command_ref = Ctrltrack.Vel_command_ref[0];
+
 	xQueueOverwrite(queueControlTransfer,&control_data);
 }
 
@@ -602,11 +605,20 @@ extern "C" void control_main(void *argument)
 
 		if(cnt%200)
 			control_step.PID_Para_Update();
-		if(cnt%10)
+		if(cnt%25)
 			slam.Position_Transfer();
 		if(cnt%4)
 			control_step.Tranfer_Data_Updata();
 		cnt++;
+
+//		if(control_step.flag1){
+//			control_step.flag1 = false;
+//			claw.Close_Request_Tran();
+//		}
+//		if(control_step.flag2){
+//			control_step.flag2 = false;
+//			claw.Open_Request_Tran();
+//		}
 
 		getTimer_us(&control_step.stopTimer);
 		control_step.executionTime_us = control_step.stopTimer - control_step.startTimer;

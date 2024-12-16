@@ -395,6 +395,10 @@ typedef struct
 	float end_command[2]{0};
 	float end_yaw{0};
 
+	bool isUniform{false};
+	bool isBrake{false};
+	float Vel_command_ref{0};
+
 }control_transfer_msg;
 typedef struct
 {

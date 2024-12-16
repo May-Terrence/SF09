@@ -290,7 +290,7 @@ void MOTORMAG::motor_run(void)
 
 	if(rcCommand.Key[0]==2) //电机锁
 	{
-		PWM[0] = iConstrain(control_output.mt_output[0],1090,2110);
+		PWM[0] = iConstrain(control_output.mt_output[0],1090,1910);
 //		PWM[0] =  rcCommand.Val[3];//电调校准行程用
 	}
 	else

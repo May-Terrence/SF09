@@ -60,7 +60,7 @@ using namespace Eigen;
 #define HOVER_SPEED 1225.0f//
 #define GE_SPEED   0.1f
 #define GE_ACC     -0.3f
-#define HOVER_PWM 1870//细桨1650 //
+#define HOVER_PWM 1860//细桨1650 //
 #define IDLING_PWM 1650
 #define DRIFT_PWM HOVER_PWM-20//细桨1630
 #define GROSSMASS 1.85f//2.1f
@@ -70,7 +70,7 @@ using namespace Eigen;
 #define HOVER_SPEED 1225.0f//
 #define GE_SPEED   0.1f
 #define GE_ACC     -0.3f
-#define HOVER_PWM 1765//细桨1650 //宽桨1545
+#define HOVER_PWM 1720//细桨1650 //宽桨1545
 #define IDLING_PWM 1450
 #define DRIFT_PWM 1630//细桨1630 //宽桨1525
 #define GROSSMASS 1.85f//2.1f
@@ -80,7 +80,7 @@ using namespace Eigen;
 #define HOVER_SPEED 1225.0f//
 #define GE_SPEED   0.1f
 #define GE_ACC     -0.3f
-#define HOVER_PWM 1765//细桨1650 //宽桨1545
+#define HOVER_PWM 1710//细桨1650 //宽桨1545
 #define IDLING_PWM 1450
 #define DRIFT_PWM 1630//细桨1630 //宽桨1525
 #define GROSSMASS 1.85f//2.1f
@@ -368,8 +368,8 @@ public:
 	void calcCircularAngle(float iniAng,float goalAng,int direction);
 	void StatusClear(void);
 	void virtualFence(void);
-	void add_differentiation(void);
-	void remove_differentiation(void);
+	void land_pid(void);
+	void remove_land_pid(void);
 
 	PID pid[PID_NUM];
 

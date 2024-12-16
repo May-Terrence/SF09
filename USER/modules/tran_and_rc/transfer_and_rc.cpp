@@ -1833,17 +1833,21 @@ bool TRAN::uart_Send_User(void)//航点
 	tran.TxDat[32] = BYTE1(temp);
 	tran.TxDat[33] = BYTE0(temp);
 
-	temp = control_data.end_command[0]*100;					//user_data19	X位置估计误差
+	temp = gps.status*100;					//user_data19	X位置估计误差
 	tran.TxDat[34] = BYTE1(temp);
 	tran.TxDat[35] = BYTE0(temp);
 
-	temp = control_data.end_command[1]*100;				//user_data20	Y位置估计误差
+	temp = motor_msg.PWM_OBS[0];;				//user_data20	Y位置估计误差
 	tran.TxDat[36] = BYTE1(temp);
 	tran.TxDat[37] = BYTE0(temp);
 
-	temp = control_data.end_yaw*100;						//user_data17
+	temp = control_data.mt_output[0];						//user_data17
 	tran.TxDat[38] = BYTE1(temp);
 	tran.TxDat[39] = BYTE0(temp);
+
+//	temp = control_data.Vel_command_ref*100;						//user_data17
+//	tran.TxDat[38] = BYTE1(temp);
+//	tran.TxDat[39] = BYTE0(temp);
 
 //	temp = gps.status*100;					//user_data19	X位置估计误差
 //	tran.TxDat[34] = BYTE1(temp);
@@ -1905,17 +1909,29 @@ bool TRAN::uart_Send_User(void)//航点
 	tran.TxDat[44] = BYTE1(temp);
 	tran.TxDat[45] = BYTE0(temp);
 
-	temp = gps.NED_spd[0]*100;							//user_data4	X位置反馈值
+	temp = claw_msg.Pos[0]*100;							//user_data4	X位置反馈值
 	tran.TxDat[46] = BYTE1(temp);
 	tran.TxDat[47] = BYTE0(temp);
 
-	temp = gps.NED_spd[1]*100;							//user_data5	Y位置反馈值
+	temp = claw_msg.Pos[1]*100;							//user_data5	Y位置反馈值
 	tran.TxDat[48] = BYTE1(temp);
 	tran.TxDat[49] = BYTE0(temp);
 
-	temp = gps.NED_spd[2]*100;							//user_data6	Z位置反馈值
+	temp = claw_msg.Pos[2]*100;							//user_data6	Z位置反馈值
 	tran.TxDat[50] = BYTE1(temp);
 	tran.TxDat[51] = BYTE0(temp);
+
+//	temp = control_data.isUniform*100;							//user_data4	X位置反馈值
+//	tran.TxDat[46] = BYTE1(temp);
+//	tran.TxDat[47] = BYTE0(temp);
+//
+//	temp = control_data.isBrake*100;							//user_data5	Y位置反馈值
+//	tran.TxDat[48] = BYTE1(temp);
+//	tran.TxDat[49] = BYTE0(temp);
+//
+//	temp = control_data.Acc_command[0]*100;							//user_data6	Z位置反馈值
+//	tran.TxDat[50] = BYTE1(temp);
+//	tran.TxDat[51] = BYTE0(temp);
 
 //	temp = control_data.end_command[0]*100;			//user_data16	X位置估计
 //	tran.TxDat[52] = BYTE1(temp);

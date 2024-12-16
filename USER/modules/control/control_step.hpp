@@ -50,6 +50,9 @@ public:
 	uint32_t TakeOffTimer;
 	bool return_to_base;
 
+	bool flag1{false};
+	bool flag2{false};
+
 
 private:
 //	RC_command_msg rcCommand;
