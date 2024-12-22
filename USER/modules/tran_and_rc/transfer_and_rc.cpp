@@ -1897,27 +1897,33 @@ bool TRAN::uart_Send_User(void)//航点
 //	tran.TxDat[50] = BYTE1(temp);
 //	tran.TxDat[51] = BYTE0(temp);
 
-	temp = gps.NED[0]*100;							//user_data4	X位置反馈值
+//	temp = gps.NED[0]*100;							//user_data4	X位置反馈值
+	temp = control_data.Acc_d[0]*100;
 	tran.TxDat[40] = BYTE1(temp);
 	tran.TxDat[41] = BYTE0(temp);
 
-	temp = gps.NED[1]*100;							//user_data5	Y位置反馈值
+//	temp = gps.NED[1]*100;							//user_data5	Y位置反馈值
+	temp = control_data.Acc_d[1]*100;
 	tran.TxDat[42] = BYTE1(temp);
 	tran.TxDat[43] = BYTE0(temp);
 
-	temp = gps.NED[2]*100;							//user_data6	Z位置反馈值
+//	temp = gps.NED[2]*100;							//user_data6	Z位置反馈值
+	temp = control_data.Acc_d[2]*100;
 	tran.TxDat[44] = BYTE1(temp);
 	tran.TxDat[45] = BYTE0(temp);
 
-	temp = claw_msg.Pos[0]*100;							//user_data4	X位置反馈值
+//	temp = claw_msg.Pos[0]*100;							//user_data4	X位置反馈值
+	temp = control_data.Acc_d_filter[0]*100;
 	tran.TxDat[46] = BYTE1(temp);
 	tran.TxDat[47] = BYTE0(temp);
 
-	temp = claw_msg.Pos[1]*100;							//user_data5	Y位置反馈值
+//	temp = claw_msg.Pos[1]*100;							//user_data5	Y位置反馈值
+	temp = control_data.Acc_d_filter[1]*100;
 	tran.TxDat[48] = BYTE1(temp);
 	tran.TxDat[49] = BYTE0(temp);
 
-	temp = claw_msg.Pos[2]*100;							//user_data6	Z位置反馈值
+//	temp = claw_msg.Pos[2]*100;							//user_data6	Z位置反馈值
+	temp = control_data.Acc_d_filter[2]*100;
 	tran.TxDat[50] = BYTE1(temp);
 	tran.TxDat[51] = BYTE0(temp);
 

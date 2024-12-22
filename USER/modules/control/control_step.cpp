@@ -7,7 +7,7 @@
 #include "control_step.hpp"
 #include <tran_and_rc/transfer_and_rc.hpp>
 #include "path_follow/pathFollow.hpp"
-#include "claw_tran/claw_tran.hpp"
+// #include "claw_tran/claw_tran.hpp"
 
 CONTROL_STEP control_step;
 
@@ -111,7 +111,7 @@ void CONTROL_STEP::Control_Step()
 				if(rcCommand.Key[3] == 0 )
 				{
 					CtrlIO.control_mode = 2;//自控模式
-					if(claw.isOpen) claw.Close_Request_Tran();
+					// if(claw.isOpen) claw.Close_Request_Tran();
 				}
 				else if (rcCommand.Key[3] == 2 )
 				{
@@ -126,7 +126,7 @@ void CONTROL_STEP::Control_Step()
 						CtrlLpIO.end_yaw= CtrlLpIO.Yaw0;
 						CtrlLpIO.Z_laser_pos0 = laserFlow.heightFil;
 
-						if(claw.isClose) claw.Open_Request_Tran();
+						// if(claw.isClose) claw.Open_Request_Tran();
 						xQueuePeek(queueClaw, &claw_msg,0);
 						CtrlLpIO.X_claw_pos0 = claw_msg.Pos[0];//仅第一次记录xy当前位置
 						CtrlLpIO.Y_claw_pos0 = claw_msg.Pos[1];
@@ -219,7 +219,7 @@ void CONTROL_STEP::Control_Step()
 		CtrlIO.control_mode = 2;
 		rcCommand.Key[0]    = 2;
 		static int take_off_cnt = 0;
-		if(claw.isClose) claw.Open_Request_Tran();
+		// if(claw.isClose) claw.Open_Request_Tran();
 
 		if(++take_off_cnt>600){
 			CtrlIO.control_mode = 3;
@@ -299,12 +299,12 @@ void CONTROL_STEP::Control_Step()
 //				  xQueuePeek(queuelaserFlow, &laserFlow, 0);
 //				  CtrlFbck.Z[0] = -laserFlow.heightFil;
 //			}
-			if(CtrlIO.last_control_mode == 3) {
-				CtrlIO.FlightStatus = GROUND;
-				rcCommand.OneKeyTakeoff = false;
-				rcCommand.OneKeyLanding = false;
-				isReady = true;
-			}
+//			if(CtrlIO.last_control_mode == 3) {
+//				CtrlIO.FlightStatus = GROUND;
+//				rcCommand.OneKeyTakeoff = false;
+//				rcCommand.OneKeyLanding = false;
+//				isReady = true;
+//			}
 
 			Out_Loop_XY_Pre2();           //水平速度给定，判断定点模式
 			Out_Loop_Z_Pre2();            //高度给定
@@ -332,16 +332,16 @@ void CONTROL_STEP::Control_Step()
 //			  if(rcCommand.OneKeyLanding == true)  OneKeyLanding(0,0,false,true);
 			  if(rcCommand.OneKeyLanding == true){
 				  if(rcCommand.Key[1]==2){
-					  if(isReady){
-						  xQueuePeek(queueClaw, &claw_msg,0);
-						  if(claw.isUpdate && claw.noMove){
-							  CtrlLpIO.end_command[0] = CtrlLpIO.X_pos0 + claw_msg.Pos[0] - CtrlLpIO.X_claw_pos0;
-							  CtrlLpIO.end_command[1] = CtrlLpIO.Y_pos0 + claw_msg.Pos[1] - CtrlLpIO.Y_claw_pos0;
-							  CtrlLpIO.end_command[2] = CtrlLpIO.Z_pos0 + claw_msg.Pos[2] - CtrlLpIO.Z_claw_pos0;
-							  CtrlLpIO.end_yaw = claw_msg.Yaw*D2R;
-							  isReady = false;
-						  }
-					  }
+					//   if(isReady){
+					// 	  xQueuePeek(queueClaw, &claw_msg,0);
+					// 	  if(claw.isUpdate && claw.noMove){
+					// 		  CtrlLpIO.end_command[0] = CtrlLpIO.X_pos0 + claw_msg.Pos[0] - CtrlLpIO.X_claw_pos0;
+					// 		  CtrlLpIO.end_command[1] = CtrlLpIO.Y_pos0 + claw_msg.Pos[1] - CtrlLpIO.Y_claw_pos0;
+					// 		  CtrlLpIO.end_command[2] = CtrlLpIO.Z_pos0 + claw_msg.Pos[2] - CtrlLpIO.Z_claw_pos0;
+					// 		  CtrlLpIO.end_yaw = claw_msg.Yaw*D2R;
+					// 		  isReady = false;
+					// 	  }
+					//   }
 					  if(!isReady) OneKeyLanding(CtrlLpIO.end_command[0],CtrlLpIO.end_command[1],true,true);
 				  }
 				  else
@@ -582,6 +582,12 @@ void CONTROL_STEP::Tranfer_Data_Updata(void)
 	control_data.isBrake = Ctrltrack.isBrake;
 	control_data.Vel_command_ref = Ctrltrack.Vel_command_ref[0];
 
+	control_data.Acc_d_filter[0] = CtrlINDI.Acc_d_filter[0];
+	control_data.Acc_d_filter[1] = CtrlINDI.Acc_d_filter[1];
+	control_data.Acc_d_filter[2] = CtrlINDI.Acc_d_filter[2];
+	control_data.Acc_d[0] = CtrlINDI.Acc_d[0];
+	control_data.Acc_d[1] = CtrlINDI.Acc_d[1];
+	control_data.Acc_d[2] = CtrlINDI.Acc_d[2];
 	xQueueOverwrite(queueControlTransfer,&control_data);
 }
 

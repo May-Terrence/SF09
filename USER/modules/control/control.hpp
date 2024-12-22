@@ -295,8 +295,10 @@ typedef struct
 	float  G_cv[3];
 	int    Filt_AngularAcc[3];
 	int    Filt_Output[3];
-	double output_acc0[3]{0};
-	double output_acc[3]{0};
+	float Acc_d_filter[3]{0};
+	float Acc_d[3]{0};
+    float Acc_d_filter_param[3]{0};
+    float Acc_disturb[3]{0};
 }sINDI;
 typedef struct
 {

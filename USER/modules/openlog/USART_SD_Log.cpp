@@ -5,18 +5,18 @@ openlog_classdef<16> openlog(uart_Send_DMA);
 static bool TxFlag=false;
 uint8_t    TxDat[60];
 
-void USART1_IRQHandler(void)
+void USART6_IRQHandler(void)
 {
-	if(LL_USART_IsActiveFlag_IDLE(USART1))
+	if(LL_USART_IsActiveFlag_IDLE(USART6))
 	{
-		LL_USART_ClearFlag_IDLE(USART1);
-		LL_DMA_DisableStream(DMA2,LL_DMA_STREAM_2);
-		LL_DMA_ClearFlag_DME2(DMA2);
-		LL_DMA_ClearFlag_HT2(DMA2);
-		LL_DMA_ClearFlag_TC2(DMA2);
-		LL_DMA_ClearFlag_TE2(DMA2);
-		LL_DMA_ClearFlag_FE2(DMA2);
-//		tran.RxDataSize = TRAN_RX_LEN - LL_DMA_GetDataLength(DMA2, LL_DMA_STREAM_2);
+		LL_USART_ClearFlag_IDLE(USART6);
+		LL_DMA_DisableStream(DMA2,LL_DMA_STREAM_1);
+		LL_DMA_ClearFlag_DME1(DMA2);
+		LL_DMA_ClearFlag_HT1(DMA2);
+		LL_DMA_ClearFlag_TC1(DMA2);
+		LL_DMA_ClearFlag_TE1(DMA2);
+		LL_DMA_ClearFlag_FE1(DMA2);
+//		tran.RxDataSize = TRAN_RX_LEN - LL_DMA_GetDataLength(DMA2, LL_DMA_STREAM_1);
 //		do{//0xAA 0xAF [功能字] [字节数] [内容...] [校验和]
 //			if(tran.RxRawDat[0]!=0xAA || tran.RxRawDat[1]!=0xAF || tran.RxRawDat[3]!=tran.RxDataSize-5) break;
 //			if(tran.LockRx == HAL_LOCKED) break;
@@ -35,135 +35,122 @@ void USART1_IRQHandler(void)
 //				portYIELD_FROM_ISR(YieldRequired);
 //			}
 //		}while(0);
-		LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_2, 60);
-		LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_2);
+		LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_1, 60);
+		LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_1);
 	}
 }
-void DMA2_Stream7_IRQHandler(void)  //发送DMA中断
+void DMA2_Stream6_IRQHandler(void)  //发送DMA中断
 {
-	LL_DMA_DisableStream(DMA2,LL_DMA_STREAM_7);
-	LL_DMA_ClearFlag_TC7(DMA2);
+	LL_DMA_DisableStream(DMA2,LL_DMA_STREAM_6);
+	LL_DMA_ClearFlag_TC6(DMA2);
 	TxFlag = false;
 }
 bool uart_Send_DMA(uint8_t * pData,uint16_t Size)
 {
 	if(TxFlag == true) return false;	//串口发送忙,放弃发送该帧数据
-	LL_DMA_DisableStream(DMA2,LL_DMA_STREAM_7);
-	LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_7, Size);
-	LL_DMA_SetMemoryAddress(DMA2, LL_DMA_STREAM_7, (uint32_t)pData);
-	LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_7);
+	LL_DMA_DisableStream(DMA2,LL_DMA_STREAM_6);
+	LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_6, Size);
+	LL_DMA_SetMemoryAddress(DMA2, LL_DMA_STREAM_6, (uint32_t)pData);
+	LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_6);
 	TxFlag = true;
 	return true;
 }
 void TRAN_Init(void)
 {
 	/* 配置发送DMA */
-	LL_DMA_DisableStream(DMA2,LL_DMA_STREAM_7);
-	LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_7, (uint32_t)&USART1->TDR);
-	LL_DMA_SetMemoryAddress(DMA2, LL_DMA_STREAM_7, (uint32_t)TxDat);
-	LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_7, 60);
-	LL_DMA_ClearFlag_TC7(DMA2);
-	LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_7);
-	LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_7);
+	LL_DMA_DisableStream(DMA2,LL_DMA_STREAM_6);
+	LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_6, (uint32_t)&USART6->TDR);
+	LL_DMA_SetMemoryAddress(DMA2, LL_DMA_STREAM_6, (uint32_t)TxDat);
+	LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_6, 60);
+	LL_DMA_ClearFlag_TC6(DMA2);
+	LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_6);
+	LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_6);
 	/* 配置发送DMA */
 
-	LL_USART_EnableDMAReq_RX(USART1);
-	LL_USART_EnableDMAReq_TX(USART1);
-	LL_USART_ClearFlag_IDLE(USART1);
-	LL_USART_ClearFlag_CM(USART1);
-	LL_USART_EnableIT_IDLE(USART1);
+	LL_USART_EnableDMAReq_RX(USART6);
+	LL_USART_EnableDMAReq_TX(USART6);
+	LL_USART_ClearFlag_IDLE(USART6);
+	LL_USART_ClearFlag_CM(USART6);
+	LL_USART_EnableIT_IDLE(USART6);
 }
-void EskfDataStorage(void)
-{
-	getTimer_us(&startTimer);
-	xQueuePeek(queueESKF,&EskfLog,0);
-	xQueuePeek(queueESKF_baro,&Eskf_baroLog,0);
-	xQueuePeek(queueGps,&GpsLog,0);
-	xQueuePeek(queueBaroAlt,&baroAlt,0);
-	xQueuePeek(queueMag, &mag, 0);
-	xQueuePeek(queueDownsampleIMU, &imu, 0);
-	xQueuePeek(queueRCCommand, &rcCommand, 0);
-	xQueuePeek(queueAccDat, &acc, 0);
-	xQueuePeek(queueGyrDat, &gyro, 0);
-	xQueuePeek(queueDownsampleIMU, &imu, 0);
-	vs32 temp[60];
-	temp[0] = startTimer/100;
-	/*eskf data*/
-	temp[1] = EskfLog.Pos[0]*1000;
-	temp[2] = EskfLog.Pos[1]*1000;
-	temp[3] = EskfLog.Pos[2]*1000;
-	temp[4] = EskfLog.Ned_spd[0]*1000;
-	temp[5] = EskfLog.Ned_spd[1]*1000;
-	temp[6] = EskfLog.Ned_spd[2]*1000;
+//void EskfDataStorage(void)
+//{
+//	getTimer_us(&startTimer);
+//	xQueuePeek(queueESKF,&EskfLog,0);
+//	xQueuePeek(queueESKF_baro,&Eskf_baroLog,0);
+//	xQueuePeek(queueOrdinaryGps,&GpsLog,0);
+//	xQueuePeek(queueBaroAlt,&baroAlt,0);
+//	xQueuePeek(queueMag, &mag, 0);
+//	xQueuePeek(queueDownsampleIMU, &imu, 0);
+//	xQueuePeek(queueRCCommand, &rcCommand, 0);
+//	vs32 temp[60];
+//	temp[0] = startTimer/100;
+//	/*eskf data*/
+//	temp[1] = EskfLog.Pos[0]*1000;
+//	temp[2] = EskfLog.Pos[1]*1000;
+//	temp[3] = EskfLog.Pos[2]*1000;
+//	temp[4] = EskfLog.Ned_spd[0]*1000;
+//	temp[5] = EskfLog.Ned_spd[1]*1000;
+//	temp[6] = EskfLog.Ned_spd[2]*1000;
 //	temp[7] = EskfLog.Attitude[0]*1000;
 //	temp[8] = EskfLog.Attitude[1]*1000;
 //	temp[9] = EskfLog.Attitude[2]*1000;
-
-	/*OrdinaryGPS data*/
+//
+//	/*OrdinaryGPS data*/
 //	temp[10] = GpsLog.timestamp;
-	temp[7] = GpsLog.NED[0]*1000;
-	temp[8] = GpsLog.NED[1]*1000;
-	temp[9] = GpsLog.NED[2]*1000;
-	temp[10] = GpsLog.NED_spd[0]*1000;
-	temp[11] = GpsLog.NED_spd[1]*1000;
-	temp[12] = GpsLog.NED_spd[2]*1000;
+//	temp[11] = GpsLog.NED[0]*1000;
+//	temp[12] = GpsLog.NED[1]*1000;
+//	temp[13] = GpsLog.NED[2]*1000;
+//	temp[14] = GpsLog.NED_spd[0]*1000;
+//	temp[15] = GpsLog.NED_spd[1]*1000;
+//	temp[16] = GpsLog.NED_spd[2]*1000;
 //	temp[17] = GpsLog.gpsPosAccuracy*100;
 //	temp[18] = GpsLog.gpsSpdAccuracy*100;
-
-	/*baro data*/
+//
+//	/*baro data*/
 //	temp[19] = baroAlt.timestamp;
 //	temp[20] = baroAlt.altitude*1000;
 //	temp[21] = baroAlt.altSlope*1000;
-
-	/*MAG data*/
+//
+//	/*MAG data*/
 //	temp[22] = 0;
 //	temp[23] = mag.MagRel[0];
 //	temp[24] = mag.MagRel[1];
 //	temp[25] = mag.MagRel[2];
-
-	/*IMU data*/
+//
+//	/*IMU data*/
 //	temp[26] = imu.timestamp;
-	temp[13] = acc.acc[0]*10000000;
-	temp[14] = acc.acc[1]*10000000;
-	temp[15] = acc.acc[2]*10000000;
-	temp[16] = gyro.temperature*1000;
-	temp[17] = gyro.gyro[1]*10000000*R2D;
-	temp[18] = gyro.gyro[2]*10000000*R2D;
-
-	/*mahany-q*/
-	temp[19] = EskfLog.Acc_bias[0]*1000;
-	temp[20] = EskfLog.Acc_bias[1]*1000;
-	temp[21] = EskfLog.Acc_bias[2]*1000;
+//	temp[27] = imu.acc[0]*1000;
+//	temp[28] = imu.acc[1]*1000;
+//	temp[29] = imu.acc[2]*1000;
+//	temp[30] = imu.gyro[0]*1000;
+//	temp[31] = imu.gyro[1]*1000;
+//	temp[32] = imu.gyro[2]*1000;
+//
+//	/*mahany-q*/
+//	temp[33] = 0;
+//	temp[34] = 0;
+//	temp[35] = 0;
 //	temp[36] = 0;
-
-	/*eskf_baro data*/
-	temp[22] = EskfLog.Pos0[0]*1000;
-	temp[23] = EskfLog.Pos0[1]*1000;
-	temp[24] = EskfLog.Pos0[2]*1000;
-	temp[25] = EskfLog.Ned_spd0[0]*1000;
-	temp[26] = EskfLog.Ned_spd0[1]*1000;
-	temp[27] = EskfLog.Ned_spd0[2]*1000;
-//	temp[28] = EskfLog.Attitude0[0]*1000;
-//	temp[29] = EskfLog.Attitude0[1]*1000;
-//	temp[30] = EskfLog.Attitude0[2]*1000;
-
-	temp[28] = EskfLog.Pos1[0]*1000;
-	temp[29] = EskfLog.Pos1[1]*1000;
-	temp[30] = EskfLog.Pos1[2]*1000;
-	temp[31] = EskfLog.Ned_spd1[0]*1000;
-	temp[32] = EskfLog.Ned_spd1[1]*1000;
-	temp[33] = EskfLog.Ned_spd1[2]*1000;
-//	temp[34] = EskfLog.Attitude1[0]*1000;
-//	temp[35] = EskfLog.Attitude1[1]*1000;
-//	temp[54] = EskfLog.Attitude1[2]*1000;
-	for(int i=0;i<33;++i)
-	{
-		openlog.record("%d,",temp[i]);
-	}
-	openlog.record("%d\r",temp[33]);
-	openlog.push_buff();
-//	vTaskResume(Openlog_send_Handle);
-}
+//
+//	/*eskf_baro data*/
+//	temp[37] = Eskf_baroLog.Pos[0]*1000;
+//	temp[38] = Eskf_baroLog.Pos[1]*1000;
+//	temp[39] = Eskf_baroLog.Pos[2]*1000;
+//	temp[40] = Eskf_baroLog.Ned_spd[0]*1000;
+//	temp[41] = Eskf_baroLog.Ned_spd[1]*1000;
+//	temp[42] = Eskf_baroLog.Ned_spd[2]*1000;
+//	temp[43] = Eskf_baroLog.Attitude[0]*1000;
+//	temp[44] = Eskf_baroLog.Attitude[1]*1000;
+//	temp[45] = Eskf_baroLog.Attitude[2]*1000;
+//	for(int i=0;i<45;++i)
+//	{
+//		openlog.record("%d,",temp[i]);
+//	}
+//	openlog.record("%d\r",temp[45]);
+//	openlog.push_buff();
+////	vTaskResume(Openlog_send_Handle);
+//}
 void OutloopDataStorage(void)
 {
 	xQueuePeek(queueControlTransfer,&control_data,0);
@@ -171,8 +158,8 @@ void OutloopDataStorage(void)
 	xQueuePeek(queueGps, &gps, 0);
 	xQueuePeek(queuetrajectoryData, &trajectoryData, 0);
 	xQueuePeek(queuelaserFlow, &laserFlow, 0);
-
-
+	xQueuePeek(queueGyrDat, &gyro, 0);
+    xQueuePeek(queueMotorData,&motor_msg, 0);
 
 	getTimer_us(&startTimer);
 	volatile vs32 temp[60];
@@ -204,13 +191,16 @@ void OutloopDataStorage(void)
 
 	/*油门*/
 	temp[19] = control_data.mt_output[0];
-	temp[20] = control_data.mt_output[1];
+	temp[20] = motor_msg.PWM_OBS[0];
 
 	/*飞行状态*/
 	temp[21] = control_data.FlightStatus;
-	temp[22] = trajectoryData.angeskf[0]*1000;//PTP_Status;
-	temp[23] = trajectoryData.angeskf[1]*1000;//Circle_Status;
-	temp[24] = trajectoryData.angeskf[2]*1000;//Dubins_Status;
+	// temp[22] = trajectoryData.angeskf[0]*1000;//PTP_Status;
+	// temp[23] = trajectoryData.angeskf[1]*1000;//Circle_Status;
+	// temp[24] = trajectoryData.angeskf[2]*1000;//Dubins_Status;
+    temp[22] = gyro.gyro[0]*1000;
+	temp[23] = gyro.gyro[1]*1000;
+	temp[24] = gyro.gyro[2]*1000;
 
 	/* 全自控模式下相关变量 */
 	temp[25] = control_data.XY_phase;
@@ -243,12 +233,18 @@ void OutloopDataStorage(void)
 	temp[48] = trajectoryData.Tf[0]*1000;//control_data.pqr_command[1]*1000;
 	temp[49] = trajectoryData.Tf[1]*1000;//control_data.pqr_command[2]*1000;
 	temp[50] = trajectoryData.Tf[2]*1000;//control_data.pqr[0]*1000;
-	temp[51] = laserFlow.height*1000;//control_data.pqr[1]*1000;
-	temp[52] = laserFlow.heightFil*1000;//control_data.pqr[2]*1000;
-	temp[53] = laserFlow.Velx*1000;//control_data.roll_command[1]*1000;
-	temp[54] = laserFlow.Vely*1000;//control_data.pitch_command[1]*1000;
-	temp[55] = laserFlow.VelxFil*1000;//control_data.Jerk_command[1]*1000;
-	temp[56] = laserFlow.VelyFil*1000;//trajectoryData.goalDistance*1000;;
+	// temp[51] = laserFlow.height*1000;//control_data.pqr[1]*1000;
+	// temp[52] = laserFlow.heightFil*1000;//control_data.pqr[2]*1000;
+	// temp[53] = laserFlow.Velx*1000;//control_data.roll_command[1]*1000;
+	// temp[54] = laserFlow.Vely*1000;//control_data.pitch_command[1]*1000;
+	// temp[55] = laserFlow.VelxFil*1000;//control_data.Jerk_command[1]*1000;
+	// temp[56] = laserFlow.VelyFil*1000;//trajectoryData.goalDistance*1000;;
+    temp[51] = control_data.pqr_d_raw[0]*1000;
+    temp[52] = control_data.pqr_d_raw[1]*1000;
+    temp[53] = control_data.pqr_d_raw[2]*1000;
+    temp[54] = control_data.pqr_d0[0]*1000;
+    temp[55] = control_data.pqr_d0[1]*1000;
+    temp[56] = control_data.pqr_d0[2]*1000;
 	temp[57] = trajectoryData.Einv[0]*1000;//trajectoryData.goalAng*1000;;
 	temp[58] = trajectoryData.Einv[1]*1000;;
 	temp[59] = trajectoryData.Einv[2]*1000;;
@@ -265,9 +261,9 @@ extern "C" void tskLog(void *argument)
 	osDelay(6000);
 	TRAN_Init();
 	u8 num = 0;
-	openlog.new_file("Data0420_%d.csv",num);
-	openlog.append_file("Data0420_%d.csv",num);
-	openlog.Send();
+	// openlog.new_file("Data1223_%d.csv",num);
+	// openlog.append_file("Data1223_%d.csv",num);
+	// openlog.Send();
 //	openlog.record("timestamp,KFpos0,KFpos1,KFpos2,KFspd0,KFspd1,KFspd2,KFroll,KFpitch,KFyaw\r");
 //	openlog.record("GPStimestamp,GPSpos0,GPSpos1,GPSpos2,GPSspd0,GPSspd1,GPSspd2,gpsPosAccuracy,gpsSpdAccuracy,");
 //	openlog.record("baro_timestamp,baro_altitude,baro_altSlope,MAGtimestamp,MAGdat0,MAGdat1,MAGdat2,imu_timestamp,acc0,acc1,acc2,gyro0,gyro1,gyro2,qx,qy,qz,qw\r");
@@ -280,7 +276,7 @@ extern "C" void tskLog(void *argument)
 //		vTaskSuspend(Log_Handle);
 		xQueuePeek(queueRCCommand, &rcCommand, 0);					//从队列中获取遥控器数据
 		if(rcCommand.Key[1]==2){
-			EskfDataStorage();
+			OutloopDataStorage();
 			openlog.Send();
 		}
 	}

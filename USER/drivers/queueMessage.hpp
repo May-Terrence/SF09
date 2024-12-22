@@ -398,7 +398,8 @@ typedef struct
 	bool isUniform{false};
 	bool isBrake{false};
 	float Vel_command_ref{0};
-
+	double Acc_d_filter[3]{0};
+	double Acc_d[3]{0};
 }control_transfer_msg;
 typedef struct
 {

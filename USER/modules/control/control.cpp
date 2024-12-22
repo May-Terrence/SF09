@@ -6,7 +6,7 @@
  */
 #include "control.hpp"
 #include "alloc/dir_alloc.hpp"
-#include "claw_tran/claw_tran.hpp"
+// #include "claw_tran/claw_tran.hpp"
 
 CONTROL control;
 DIR_ALLOC dir_alloc;
@@ -105,9 +105,12 @@ void CONTROL::Control_Init()
 	CtrlINDI.Filt_Output[0]     = 40;
 	CtrlINDI.Filt_Output[1]     = 40;
 	CtrlINDI.Filt_Output[2]     = 30;
-	CtrlINDI.output_acc0[0]     = 0;
-	CtrlINDI.output_acc0[1]     = 0;
-	CtrlINDI.output_acc0[2]     = -OneG;
+    CtrlINDI.Acc_d_filter_param[0] = 10;
+    CtrlINDI.Acc_d_filter_param[1] = 10;
+    CtrlINDI.Acc_d_filter_param[2] = 10;
+    CtrlINDI.Acc_d_filter[0]     = 0;
+	CtrlINDI.Acc_d_filter[1]     = 0;
+	CtrlINDI.Acc_d_filter[2]     = -OneG;
 
 	//------------------------------------------------------
 
@@ -491,6 +494,8 @@ void CONTROL::StatusClear()
 	CtrlLpIO.AngVel_command[0] =0.0f;
 	CtrlLpIO.AngVel_command[1] =0.0f;
 	CtrlLpIO.AngVel_command[2] =0.0f;
+	isReady = true;
+	xQueueOverwrite(queueRCCommand,&rcCommand);
 }
 void CONTROL::virtualFence(){
 	xQueuePeek(queueAccDatFil, &acc_fil, 0);
@@ -819,7 +824,7 @@ void CONTROL::OneKeyTakeOff(void)
 
 			CtrlLpIO.Pos_command[0] = CtrlLpIO.X_pos0;
 			CtrlLpIO.Pos_command[1] = CtrlLpIO.Y_pos0;
-			CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0 - 0.8f;//当前高度+3m作为高度给定
+			CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0 - 1.5f;//当前高度+3m作为高度给定
 			CtrlLpIO.Ang_command[2] = CtrlFbck.Ang[2];//锁航向
 
 			ini = true;
@@ -900,7 +905,7 @@ void CONTROL::Auto_flypoint()
 		Ctrltrack.PTP_Status = PTP_hover; //悬停
 		CtrlLpIO.Pos_command[0] = CtrlLpIO.X_pos0;//CtrlFbck.X[0];
 		CtrlLpIO.Pos_command[1] = CtrlLpIO.Y_pos0;//CtrlFbck.Y[0];
-		CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0 - 0.8f;//CtrlFbck.Z[0];
+		CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0 - 1.5f;//CtrlFbck.Z[0];
 		CtrlLpIO.Ang_command[2] = CtrlFbck.Ang[2];
 		Ctrltrack.flypoint_start=true;
 	}
@@ -952,7 +957,7 @@ void CONTROL::Auto_flypoint()
 				Ctrltrack.PTP_Status = PTP_XY_Fly;
 				start << CtrlFbck.X[0],CtrlFbck.Y[0];//以当前点为起点
 				TempBodyFrame << CtrlFbck.XH[0],CtrlFbck.YH[0]; //临时坐标系原点
-				temp_height = CtrlFbck.Z[0]; //当前高度为临时高度
+				temp_height = CtrlLpIO.Pos_command[2]; //当前高度为临时高度
 				CtrlLpIO.Pos_command[0]=position.data.x; //目标X位置
 				CtrlLpIO.Pos_command[1]=position.data.y; //目标Y位置
 				end << position.data.x,position.data.y; //目标点
@@ -963,7 +968,6 @@ void CONTROL::Auto_flypoint()
 		Ctrltrack.distance_XY = (end-cur).norm();
 		if(Ctrltrack.distance_XY>=0.4f && Ctrltrack.brake_finish==false){ //当前位置与终点位置小于0.4或者刹车完成就进入下一个状态
 			Ctrltrack.brake_finish = followStraightPath(&start,&end,vel,false);
-
 		}
 		if(Ctrltrack.distance_XY<0.4f || Ctrltrack.brake_finish==true){
 			Ctrltrack.brake_finish = true;
@@ -980,7 +984,7 @@ void CONTROL::Auto_flypoint()
 		CtrlLpIO.Vel_command[1] = fConstrain(CtrlLpIO.Vel_command[1],-1,1);
 		break;
 	case PTP_Z_Fly://
-		CtrlLpIO.Pos_command[2] = temp_height-position.data.z;
+		CtrlLpIO.Pos_command[2] = temp_height - position.data.z;
 //		CtrlLpIO.Pos_command[2] = fConstrain(temp_height-position.data.z,-10,-1.5);
 		CtrlLpIO.Vel_command[0] = fConstrain(CtrlLpIO.Vel_command[0],-1,1);
 		CtrlLpIO.Vel_command[1] = fConstrain(CtrlLpIO.Vel_command[1],-1,1);
@@ -1087,9 +1091,9 @@ void CONTROL::Auto_flycircle()
 	{
 		StatusClear();
 		Ctrltrack.Circle_Status = Circle_hover;
-		CtrlLpIO.Pos_command[0] = CtrlFbck.X[0];
-		CtrlLpIO.Pos_command[1] = CtrlFbck.Y[0];
-		CtrlLpIO.Pos_command[2] = CtrlFbck.Z[0];//
+		CtrlLpIO.Pos_command[0] = CtrlLpIO.X_pos0;
+		CtrlLpIO.Pos_command[1] = CtrlLpIO.Y_pos0;
+		CtrlLpIO.Pos_command[2] = CtrlLpIO.Z_pos0 - 1.5f;//
 		CtrlLpIO.Ang_command[2] = CtrlFbck.Ang[2];
 		Ctrltrack.flycircle_start=true;
 		num = 0;
@@ -1120,7 +1124,7 @@ void CONTROL::Auto_flycircle()
 			center << position.data.x,position.data.y;
 			point_list[num].GetSpeed(&vel); //获得画圆的速度信息
 			point_list[num].GetStayTime(&staytime);//
-			temp_height = CtrlFbck.Z[0];
+			temp_height = CtrlLpIO.Pos_command[2];
 			fly_radius = SQR(vel)/OneG/tan(1.5*D2R); //tan6-1.028  tan5-0.856  tan4-0.684  tan3-0.512  tan2-0.341 tan1.5-0.256
 //			fly_radius = sqrt(SQR(position.data.x-CtrlFbck.X[0])+SQR(position.data.y-CtrlFbck.Y[0]));
 		}
@@ -1378,31 +1382,31 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 			}
 		}
 		if(CtrlIO.FlightStatus == LANDING){
-//			CtrlLpIO.Vel_command[2] = 0.5;
-//			CtrlLpIO.Vel_command[2] = fConstrain(CtrlLpIO.Vel_command[2],-1,0.5);
-//			CtrlLpIO.landing_acc_mode = TarHit(&CtrlLpIO.alt_landing_cnt,Vel_tol,CtrlLpIO.Vel_err[2]);
-//			if(CtrlLpIO.landing_acc_mode == false){
-//				if(CtrlFbck.Z[1]<=GE1  && (acc_fil.acc_filter[2]+OneG)<=GE2){
-//					if(CtrlIO.rc_status == CLOSE){
-//						slam.status = Ground;
-//						slam.Status_Transfer();
-//						if(slam.isCommunicating){
-//							CtrlIO.FlightStatus = GE;
-//							slam.Ready_Land = false;
-//							slam.isCommunicating = false;
-//							slam.status = NONE;
-//							rcCommand.Key[0] = 0;
-//							CtrlIO.control_mode = 2;
-//							remove_land_pid();
-//						}
-//					}
-//					else{
-//						CtrlIO.FlightStatus = GE;
-//						rcCommand.OneKeyLanding = false;
-//						remove_land_pid();
-//					}
-//				}
-//			}
+			CtrlLpIO.Vel_command[2] = 0.5;
+			CtrlLpIO.Vel_command[2] = fConstrain(CtrlLpIO.Vel_command[2],-1,0.5);
+			CtrlLpIO.landing_acc_mode = TarHit(&CtrlLpIO.alt_landing_cnt,Vel_tol,CtrlLpIO.Vel_err[2]);
+			if(CtrlLpIO.landing_acc_mode == false){
+				if(CtrlFbck.Z[1]<=GE1  && (acc_fil.acc_filter[2]+OneG)<=GE2){
+					if(CtrlIO.rc_status == CLOSE){
+						slam.status = Ground;
+						slam.Status_Transfer();
+						if(slam.isCommunicating){
+							CtrlIO.FlightStatus = GE;
+							slam.Ready_Land = false;
+							slam.isCommunicating = false;
+							slam.status = NONE;
+							rcCommand.Key[0] = 0;
+							CtrlIO.control_mode = 2;
+							remove_land_pid();
+						}
+					}
+					else{
+						CtrlIO.FlightStatus = GE;
+						rcCommand.OneKeyLanding = false;
+						remove_land_pid();
+					}
+				}
+			}
 
 /*激光融合ESKF*/
 //				xQueuePeek(queuelaserFlow,&laserFlow,0);
@@ -1426,64 +1430,66 @@ void CONTROL::OneKeyLanding(float X,float Y,bool isAppoint,bool isUnderControl)
 //				CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
 
 /*ESKF*/
-				CtrlLpIO.Pos_command[2] = CtrlLpIO.end_command[2]-0.14f;
-				Z_err = CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0];
-				CtrlLpIO.Pos_err[2] = Z_err;
-				CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
+// 				CtrlLpIO.Pos_command[2] = CtrlLpIO.end_command[2]-0.14f;
+// 				Z_err = CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0];
+// 				CtrlLpIO.Pos_err[2] = Z_err;
+// 				CtrlLpIO.Vel_command[2] = pidZ->PID_Controller(CtrlLpIO.Pos_err[2],CtrlDt);
 
-			//NED系下
-			static int cnt = 0;
-			static int GE_cnt = 0;
-			static int RL_cnt = 0;
-//			float ax = acc_fil.acc_filter[0];
-//			float ay = acc_fil.acc_filter[1];
-//			float AX = cos(CtrlFbck.Ang[1])*ax + sin(CtrlFbck.Ang[0])*sin(CtrlFbck.Ang[1])*ay;//机体系到地球系的旋转矩阵只取前两列
-//			float AY = cos(CtrlFbck.Ang[0])*ay;
-			CtrlLpIO.Pos_estimate[0] = CtrlFbck.X[0] + 0.5*CtrlFbck.X[1];// + 0.5*AX*0.62*0.62;//位置预测
-			CtrlLpIO.Pos_estimate[1] = CtrlFbck.Y[0] + 0.5*CtrlFbck.Y[1];// + 0.5*AY*0.62*0.62;
-			CtrlLpIO.X_err_estimate = abs(CtrlLpIO.Pos_command[0] - CtrlLpIO.Pos_estimate[0]);
-			CtrlLpIO.Y_err_estimate = abs(CtrlLpIO.Pos_command[1] - CtrlLpIO.Pos_estimate[1]);
-			CtrlLpIO.XY_err_estimate = sqrt(SQR(CtrlLpIO.X_err_estimate)+SQR(CtrlLpIO.Y_err_estimate));
-			if(abs(CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0])<pid[15].Kp && CtrlLpIO.XY_err_estimate<pid[15].Ki){
-				CtrlLpIO.enable_Grab_flag = true;
-				if(++cnt>15 && !claw.isClose){
-					claw.Close_Request_Tran();
-					RL_cnt = 0;
-				}
-			}
-			else{
-				cnt =0;
-				RL_cnt++;
-				CtrlLpIO.enable_Grab_flag = false;
-			}
-			if(claw.isClose){
-				if(++GE_cnt>60){
-					if(CtrlIO.rc_status == CLOSE){
-						slam.status = Ground;
-						slam.Status_Transfer();
-						if(slam.isCommunicating){
-							GE_cnt = 0;
-							CtrlIO.FlightStatus = GE;
-							slam.Ready_Land = false;
-							slam.isCommunicating = false;
-							slam.status = NONE;
-							rcCommand.Key[0] = 0;
-							CtrlIO.control_mode = 2;
-							remove_land_pid();
-						}
-					}
-					else{
-						GE_cnt = 0;
-						CtrlIO.FlightStatus = GE;
-						rcCommand.OneKeyLanding = false;
-						remove_land_pid();
-					}
-				}
-			}
-			if(RL_cnt>1500){
-				CtrlIO.FlightStatus = RELANDING;
-				RL_cnt = 0;
-			}
+// 			//NED系下
+// 			static int cnt = 0;
+// 			static int GE_cnt = 0;
+// 			static int RL_cnt = 0;
+// //			float ax = acc_fil.acc_filter[0];
+// //			float ay = acc_fil.acc_filter[1];
+// //			float AX = cos(CtrlFbck.Ang[1])*ax + sin(CtrlFbck.Ang[0])*sin(CtrlFbck.Ang[1])*ay;//机体系到地球系的旋转矩阵只取前两列
+// //			float AY = cos(CtrlFbck.Ang[0])*ay;
+// 			CtrlLpIO.Pos_estimate[0] = CtrlFbck.X[0] + 0.5*CtrlFbck.X[1];// + 0.5*AX*0.62*0.62;//位置预测
+// 			CtrlLpIO.Pos_estimate[1] = CtrlFbck.Y[0] + 0.5*CtrlFbck.Y[1];// + 0.5*AY*0.62*0.62;
+// 			CtrlLpIO.X_err_estimate = abs(CtrlLpIO.Pos_command[0] - CtrlLpIO.Pos_estimate[0]);
+// 			CtrlLpIO.Y_err_estimate = abs(CtrlLpIO.Pos_command[1] - CtrlLpIO.Pos_estimate[1]);
+// 			CtrlLpIO.XY_err_estimate = sqrt(SQR(CtrlLpIO.X_err_estimate)+SQR(CtrlLpIO.Y_err_estimate));
+// 			if(abs(CtrlLpIO.Pos_command[2] - CtrlFbck.Z[0])<pid[15].Kp && CtrlLpIO.XY_err_estimate<pid[15].Ki){
+// 				CtrlLpIO.enable_Grab_flag = true;
+// 				if(++cnt>15 && !claw.isClose){
+// 					claw.Close_Request_Tran();
+// 					RL_cnt = 0;
+// 				}
+
+
+// 			}
+// 			else{
+// 				cnt =0;
+// 				RL_cnt++;
+// 				CtrlLpIO.enable_Grab_flag = false;
+// 			}
+// 			if(claw.isClose){
+// 				if(++GE_cnt>60){
+// 					if(CtrlIO.rc_status == CLOSE){
+// 						slam.status = Ground;
+// 						slam.Status_Transfer();
+// 						if(slam.isCommunicating){
+// 							GE_cnt = 0;
+// 							CtrlIO.FlightStatus = GE;
+// 							slam.Ready_Land = false;
+// 							slam.isCommunicating = false;
+// 							slam.status = NONE;
+// 							rcCommand.Key[0] = 0;
+// 							CtrlIO.control_mode = 2;
+// 							remove_land_pid();
+// 						}
+// 					}
+// 					else{
+// 						GE_cnt = 0;
+// 						CtrlIO.FlightStatus = GE;
+// 						rcCommand.OneKeyLanding = false;
+// 						remove_land_pid();
+// 					}
+// 				}
+// 			}
+// 			if(RL_cnt>1500){
+// 				CtrlIO.FlightStatus = RELANDING;
+// 				RL_cnt = 0;
+// 			}
 		}
 		if(CtrlIO.FlightStatus == RELANDING){
 			Ctrltrack.distance_XY = (end-cur).norm();
@@ -2109,26 +2115,39 @@ void CONTROL::Out_Loop_Step2()
 	float ax = acc_fil.acc_filter[0] ;//- gps->acc_bias_EKF[0];
 	float ay = acc_fil.acc_filter[1] ;//- gps->acc_bias_EKF[1];
 	float az = acc_fil.acc_filter[2] ;//- gps->acc_bias_EKF[2];
-	float A1 = ad - cos(CtrlFbck.Ang[1])*ax - sin(CtrlFbck.Ang[0])*sin(CtrlFbck.Ang[1])*ay;//机体系到地球系的旋转矩阵只取前两列
-	float A2 = bd - cos(CtrlFbck.Ang[0])*ay;
-	float A3 = cd + sin(CtrlFbck.Ang[1])*ax - sin(CtrlFbck.Ang[0])*cos(CtrlFbck.Ang[1])*ay - OneG;
+    // CtrlINDI.Acc_disturb[0] =  cos(CtrlFbck.Ang[1])*ax + sin(CtrlFbck.Ang[0])*sin(CtrlFbck.Ang[1])*ay;
+    // CtrlINDI.Acc_disturb[1] =  cos(CtrlFbck.Ang[0])*ay;
+    // CtrlINDI.Acc_disturb[2] = -sin(CtrlFbck.Ang[1])*ax + sin(CtrlFbck.Ang[0])*cos(CtrlFbck.Ang[1])*ay + OneG;
+    // CtrlINDI.Acc_d[0] = ad - CtrlINDI.Acc_disturb[0];//机体系到地球系的旋转矩阵只取前两列
+	// CtrlINDI.Acc_d[1] = bd - CtrlINDI.Acc_disturb[1];
+	// CtrlINDI.Acc_d[2] = cd - CtrlINDI.Acc_disturb[2];
+    // CtrlINDI.Acc_d[0] = ad - cos(CtrlFbck.Ang[1])*ax - sin(CtrlFbck.Ang[0])*sin(CtrlFbck.Ang[1])*ay;//机体系到地球系的旋转矩阵只取前两列
+	// CtrlINDI.Acc_d[1] = bd - cos(CtrlFbck.Ang[0])*ay;
+	// CtrlINDI.Acc_d[2] = cd + sin(CtrlFbck.Ang[1])*ax - sin(CtrlFbck.Ang[0])*cos(CtrlFbck.Ang[1])*ay - OneG;
 //	//---------------------速度环INDI-------------------------//改为和角速度内环INDI一样的参数,    改加速度计滤波值，  取消拉力补偿
-//	float A1 = ad - cos(CtrlFbck.Ang[1])*ax - sin(CtrlFbck.Ang[0])*sin(CtrlFbck.Ang[1])*ay - cos(CtrlFbck.Ang[0])*sin(CtrlFbck.Ang[1])*az + CtrlINDI.output_acc0[0];
-//	float A2 = bd - cos(CtrlFbck.Ang[0])*ay + sin(CtrlFbck.Ang[0])*az + CtrlINDI.output_acc0[1];
-//	float A3 = cd + sin(CtrlFbck.Ang[1])*ax - sin(CtrlFbck.Ang[0])*cos(CtrlFbck.Ang[1])*ay - cos(CtrlFbck.Ang[0])*cos(CtrlFbck.Ang[1])*az - OneG + CtrlINDI.output_acc0[2];
-//	CtrlINDI.output_acc[0]=A1;
-//	CtrlINDI.output_acc[1]=A2;
-//	CtrlINDI.output_acc[2]=A3;
+    CtrlINDI.Acc_disturb[0] =  cos(CtrlFbck.Ang[1])*ax + sin(CtrlFbck.Ang[0])*sin(CtrlFbck.Ang[1])*ay + cos(CtrlFbck.Ang[0])*sin(CtrlFbck.Ang[1])*az;
+    CtrlINDI.Acc_disturb[1] =  cos(CtrlFbck.Ang[0])*ay - sin(CtrlFbck.Ang[0])*az;
+    CtrlINDI.Acc_disturb[2] = -sin(CtrlFbck.Ang[1])*ax + cos(CtrlFbck.Ang[0])*sin(CtrlFbck.Ang[1])*ay + cos(CtrlFbck.Ang[0])*cos(CtrlFbck.Ang[1])*az + OneG;
+    CtrlINDI.Acc_d[0] = ad - CtrlINDI.Acc_disturb[0] + CtrlINDI.Acc_d_filter[0];
+	CtrlINDI.Acc_d[1] = bd - CtrlINDI.Acc_disturb[1] + CtrlINDI.Acc_d_filter[1];
+	CtrlINDI.Acc_d[2] = cd - CtrlINDI.Acc_disturb[2] + CtrlINDI.Acc_d_filter[2];
+	// CtrlINDI.Acc_d[0] = ad - cos(CtrlFbck.Ang[1])*ax - sin(CtrlFbck.Ang[0])*sin(CtrlFbck.Ang[1])*ay - cos(CtrlFbck.Ang[0])*sin(CtrlFbck.Ang[1])*az + CtrlINDI.Acc_d_filter[0];
+	// CtrlINDI.Acc_d[1] = bd - cos(CtrlFbck.Ang[0])*ay + sin(CtrlFbck.Ang[0])*az + CtrlINDI.Acc_d_filter[1];
+	// CtrlINDI.Acc_d[2] = cd + sin(CtrlFbck.Ang[1])*ax - sin(CtrlFbck.Ang[0])*cos(CtrlFbck.Ang[1])*ay - cos(CtrlFbck.Ang[0])*cos(CtrlFbck.Ang[1])*az - OneG + CtrlINDI.Acc_d_filter[2];
+    CtrlINDI.Acc_d[0] = fConstrain(CtrlINDI.Acc_d[0], -3.5, 3.5);
+    CtrlINDI.Acc_d[1] = fConstrain(CtrlINDI.Acc_d[1], -3.5, 3.5);
+    CtrlINDI.Acc_d[2] = fConstrain(CtrlINDI.Acc_d[2], -2*OneG, 0);
 //	//---------------------输出滤波-------------------------//
-//
-//	for (u8 i=0;i<3;i++)
-//	{
-//		CtrlINDI.output_acc0[i] = (CtrlINDI.output_acc0[i]*(CtrlINDI.Filt_Output[i]-1) + CtrlINDI.output_acc[i])/CtrlINDI.Filt_Output[i];
-//	}
+	for (u8 i = 0; i < 3; i++)
+	{
+		CtrlINDI.Acc_d_filter[i] = (CtrlINDI.Acc_d_filter[i] * (CtrlINDI.Acc_d_filter_param[i] - 1) + CtrlINDI.Acc_d[i]) / CtrlINDI.Acc_d_filter_param[i];
+	}
+    CtrlLpIO.ko1 = 0;
+
 	//-----------------------几何控制-----------------------
 
-	A  << A1,A2,A3;
-	A_f=A.norm();
+	A  << CtrlINDI.Acc_d[0], CtrlINDI.Acc_d[1], CtrlINDI.Acc_d[2];
+	A_f = A.norm();
 	x_c << 1.0f,0.0f,0.0f;
 	a_c3  = -A/A_f;
 	a_c2r = a_c3.cross(x_c);
@@ -2499,7 +2518,9 @@ void CONTROL::Output_To_Motor()
 		for (u8 j=0;j<3;j++)
 		{
 			CtrlINDI.output_0[j] = 0.0f;
+            CtrlINDI.Acc_d_filter[j] = 0.0f;
 		}
+        CtrlINDI.Acc_d_filter[2] = -OneG;
   		CtrlLpIO.u1_Tilt[0] = 0.0f;
   	}
 

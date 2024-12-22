@@ -4,8 +4,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void USART1_IRQHandler(void);
-void DMA2_Stream7_IRQHandler(void);
+// void USART1_IRQHandler(void);
+// void DMA2_Stream7_IRQHandler(void);
+void USART6_IRQHandler(void);
+void DMA2_Stream1_IRQHandler(void);
+void DMA2_Stream6_IRQHandler(void);
 bool uart_Send_DMA(uint8_t * pData,uint16_t Size);
 void TRAN_Init(void);
 #ifdef __cplusplus
@@ -14,19 +17,18 @@ void TRAN_Init(void);
 void EskfDataStorage(void);
 void OutloopDataStorage(void);
 eskf_msg EskfLog;
-gps_msg GpsLog;
+OrdinaryGps_msg GpsLog;
 eskf_baro_msg Eskf_baroLog;
 sensor_baroAlt_msg baroAlt;
 mag_msg mag;
 gps_msg gps;
 
-sensor_gyro_msg gyro;
-sensor_acc_msg acc;
 downsample_imu_for_eskf_msg imu;
 RC_command_msg rcCommand;
 control_transfer_msg control_data;
 trajectory_msg trajectoryData;
 laserFlow_msg laserFlow;
-
+Motor_msg motor_msg;
+sensor_gyro_msg gyro;
 
 uint32_t startTimer;
